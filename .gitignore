@@ -7,3 +7,5 @@ backend/lib/forge-std/
 backend/lib/solmate/
 .env
 yarn-error.log
+**/output/*
+**/input/*
