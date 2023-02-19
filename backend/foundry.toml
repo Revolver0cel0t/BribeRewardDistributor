@@ -1,0 +1,21 @@
+[profile.default]
+src = 'contracts'
+test = 'test'
+out = 'out'
+libs = ['lib']
+solc-version = '0.8.11'
+remappings = [
+    'forge-std/=lib/forge-std/src/',
+    '@openzeppelin/=node_modules/@openzeppelin/',
+    '@solmate/=node_modules/solmate/src/'
+    ]
+libraries = []
+#cache = false
+force = false
+optimizer = false
+#optimizer_runs = 200
+verbosity = 0
+#auto_detect_solc = true
+fuzz_runs = 2048
+ffi = false
+fs_permissions = [{ access = "read-write", path = "./test/Logs/"}]

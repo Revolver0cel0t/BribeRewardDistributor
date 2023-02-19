@@ -1,0 +1,9 @@
+node_modules/
+out/
+cache/
+artifacts/
+backend/lib/ds-test/*
+backend/lib/forge-std/
+backend/lib/solmate/
+.env
+yarn-error.log
