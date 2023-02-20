@@ -1,0 +1,15 @@
+@font-face {
+  font-family: "PPNeueMachina";
+  src: url("/fonts/Neue/PPNeueMachina-Ultrabold.ttf");
+  font-style: normal;
+  font-weight: 760;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PPNeueMachina";
+  src: url("/fonts/Neue/PPNeueMachina-Light.ttf");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}

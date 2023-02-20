@@ -1,0 +1,12 @@
+{
+  "glow": {
+    "swap": "drop-shadow(4, 4, 24, #ffb5e373)",
+    "bond": "drop-shadow(4, 4, 23, #c8ff8273)",
+    "credit": "drop-shadow(4, 4, 25, #ffe60059)"
+  },
+  "elevation": {
+    "level3": "drop-shadow(0, 4, 12, #bac7d580)",
+    "level2": "drop-shadow(0, 2, 4, #171b1e26)",
+    "level1": "drop-shadow(0, 1, 2, #171b1e40) drop-shadow(0, 4, 4, #00000040)"
+  }
+}

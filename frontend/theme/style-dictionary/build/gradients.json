@@ -1,0 +1,7 @@
+{
+  "gradients": {
+    "swap": "linear-gradient(89deg, #ffbde7 31.25%, #6590ff 100%)",
+    "bond": "linear-gradient(89deg, #c8ff82 31.15%, #00d1ff 89.58%)",
+    "credit": "linear-gradient(89deg, #ffbd13 20.31%, #b53c29 100%)"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "heading-xl-ultrabold": {
+    "fontFamily": "PPNeueMachina",
+    "fontWeight": 800,
+    "lineHeight": "80px",
+    "fontSize": "60px",
+    "letterSpacing": 0,
+    "textDecoration": "none"
+  },
+  "heading-m-ultrabold": {
+    "fontFamily": "PPNeueMachina",
+    "fontWeight": 800,
+    "lineHeight": "55px",
+    "fontSize": "36px",
+    "letterSpacing": 0,
+    "textDecoration": "none"
+  },
+  "heading-s-light": {
+    "fontFamily": "PPNeueMachina",
+    "fontWeight": 300,
+    "lineHeight": "25px",
+    "fontSize": "16px",
+    "letterSpacing": 0,
+    "textDecoration": "none"
+  }
+}
