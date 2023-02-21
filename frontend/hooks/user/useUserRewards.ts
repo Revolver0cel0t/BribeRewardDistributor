@@ -17,20 +17,15 @@ export const useUserRewards = () => {
       if (data.status === 200) {
         const rewards = (await data.json()).rewardInfo;
         const tokens = rewards.rewardInfo.tokens;
-        try {
-          const merkleClaimerContract = new web3.eth.Contract(
-            MERKLE_CLAIM_ABI as AbiItem[],
-            merkleClaimAddress[chainId]
-          );
+        const merkleClaimerContract = new web3.eth.Contract(
+          MERKLE_CLAIM_ABI as AbiItem[],
+          merkleClaimAddress[chainId]
+        );
 
-          const hasClaimed = await merkleClaimerContract.methods
-            .hasClaimed(account)
-            .call();
-          if (Boolean(hasClaimed)) return;
-        } catch (e) {
-          console.log("hi");
-          console.log(e);
-        }
+        const hasClaimed = await merkleClaimerContract.methods
+          .hasClaimed(account)
+          .call();
+        if (Boolean(hasClaimed)) return;
 
         const amounts = rewards.rewardInfo.amounts;
         const tokenInfoCalls = tokens.map(

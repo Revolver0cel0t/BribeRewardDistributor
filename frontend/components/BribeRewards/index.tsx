@@ -22,8 +22,6 @@ function RewardTable() {
 
   const [claimLoading, setClaimLoading] = useState(false);
 
-  console.log(data);
-
   const claimRewards = useClaimUserRewardsCallback(
     data?.tokens as string[],
     data?.amounts as string[],

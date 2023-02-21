@@ -56,7 +56,6 @@ export const useClaimUserRewardsCallback = (
         MERKLE_CLAIM_ABI as AbiItem[],
         merkleClaimAddress[chainId]
       );
-      console.log([tokens, amounts, account, proof]);
       callContractWait(
         merkleClaimerContract,
         "claim",
