@@ -3,7 +3,7 @@ import keccakAlt from "keccak256";
 import path from "path";
 import { task } from "hardhat/config";
 import { restore } from "firestore-export-import";
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
 import { admin, serviceAccount } from "../../lib/firebase";
 import { MerkleTree } from "merkletreejs";
 import { generateLeaf } from "./generateLeaf";
@@ -62,9 +62,10 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
   let proofs: any = {};
   leaves.forEach((leaf: any, index: number) => {
     const proof = tree.getHexProof(leaf);
-    proofs[keys[index]] = {
+    const userRewardKey = keys[index];
+    proofs[userRewardKey] = {
       proof: proof,
-      rewardInfo: rewardData[keys[index]],
+      rewardInfo: rewardData[userRewardKey],
     };
   });
 

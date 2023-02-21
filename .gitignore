@@ -5,6 +5,7 @@ artifacts/
 backend/lib/ds-test/*
 backend/lib/forge-std/
 backend/lib/solmate/
+.env.local
 .env
 yarn-error.log
 **/output/*

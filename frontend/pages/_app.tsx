@@ -4,7 +4,11 @@ import Web3ReactManager from "services/web3/Web3ReactManager.jsx";
 import { ThemeContextProvider } from "theme/themeContext.js";
 import { Web3Provider, ExternalProvider } from "@ethersproject/providers";
 import dynamic from "next/dynamic";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import stores, { persistor } from "stores";
+import Layout from "components/Layout";
 const Web3ProviderNetwork = dynamic(
   () => import("../services/web3/web3ProviderNetwork"),
   { ssr: false }
@@ -42,7 +46,19 @@ export default function App({ Component, pageProps }: AppProps) {
         <Web3ProviderNetwork getLibrary={getLibrary}>
           <ThemeContextProvider>
             <Web3ReactManager>
-              <Component {...pageProps} />
+              <Provider store={stores.reduxStore}>
+                <PersistGate
+                  loading={
+                    <Typography variant="body-m-bold" color="white">
+                      Loading...
+                    </Typography>
+                  }
+                  persistor={persistor}>
+                  <Layout>
+                    <Component {...pageProps} />
+                  </Layout>
+                </PersistGate>
+              </Provider>
             </Web3ReactManager>
           </ThemeContextProvider>
         </Web3ProviderNetwork>

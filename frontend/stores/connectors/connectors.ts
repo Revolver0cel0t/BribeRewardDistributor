@@ -12,7 +12,13 @@ export enum ChainIds {
   GOERLI = 5,
 }
 
-export const supportedChainIds = [ChainIds.ETHEREUM];
+export const ETHERSCAN_URL = {
+  [ChainIds.ARBITRUM]: "https://arbiscan.io/",
+  [ChainIds.ARBITRUM_GOERLI]: "https://goerli-rollup-explorer.arbitrum.io/",
+  [ChainIds.GOERLI]: "https://goerli.etherscan.io/",
+};
+
+export const supportedChainIds = [ChainIds.ARBITRUM];
 
 const POLLING_INTERVAL = 12000;
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -68,11 +74,11 @@ export const network = new NetworkConnector({
     [ChainIds.GOERLI]: RPC_URLS[ChainIds.GOERLI],
     [ChainIds.ETHEREUM]: RPC_URLS[ChainIds.ETHEREUM],
   },
-  defaultChainId: ChainIds.ETHEREUM,
+  defaultChainId: ChainIds.ARBITRUM,
 });
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [ChainIds.ETHEREUM],
+  // supportedChainIds: [ChainIds.ARBITRUM],
 });
 
 export const walletconnect = new WalletConnectConnector({
@@ -80,10 +86,46 @@ export const walletconnect = new WalletConnectConnector({
   qrcode: true,
   // @ts-ignore
   pollingInterval: POLLING_INTERVAL,
-  supportedChainIds: [ChainIds.ETHEREUM],
+  // supportedChainIds: [ChainIds.ARBITRUM],
 });
 
 export const connectorsByName: { [value: string]: any } = {
   MetaMask: injected,
   WalletConnect: walletconnect,
+};
+
+export const ADD_CHAIN = {
+  [ChainIds.ARBITRUM]: {
+    chainId: "0xA4B1",
+    chainName: "Arbitrum",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: [RPC_URLS[ChainIds.ARBITRUM]],
+    blockExplorerUrls: [ETHERSCAN_URL[ChainIds.ARBITRUM]],
+  },
+  [ChainIds.ARBITRUM_GOERLI]: {
+    chainId: "0x66EED",
+    chainName: "Arbitrum Nitro Goerli Testnet",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: ["https://goerli-rollup.arbitrum.io/rpc"],
+    blockExplorerUrls: [ETHERSCAN_URL[ChainIds.ARBITRUM_GOERLI]],
+  },
+  [ChainIds.GOERLI]: {
+    chainId: "0x5",
+    chainName: "Goerli",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: [RPC_URLS[ChainIds.GOERLI]],
+    blockExplorerUrls: [ETHERSCAN_URL[ChainIds.GOERLI]],
+  },
 };

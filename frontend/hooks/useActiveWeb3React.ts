@@ -5,7 +5,7 @@ import { Eth } from "web3-eth";
 import { provider } from "web3-core";
 import { createAlchemyWeb3, AlchemyWeb3 } from "@alch/alchemy-web3";
 import { ChainIds, network } from "stores/connectors/connectors";
-import { Alchemy, Network } from "alchemy-sdk";
+import { Alchemy } from "alchemy-sdk";
 import { Web3ReactContextInterface } from "@web3-react/core/dist/types";
 import { RPC_URLS } from "stores/connectors/connectors";
 import { supportedChainIds } from "stores/connectors/connectors";
@@ -65,8 +65,8 @@ const getWeb3Object = (
   context: Web3ReactContextInterface,
   contextNetwork: Web3ReactContextInterface
 ): CustomWeb3ReactContextInterface => {
-  // const impersonate = false;
-  const impersonate = "0xEA59dd3cD190ed20D0c63C6Bf66B1EaF7ad45976";
+  const impersonate = false;
+  // const impersonate = "0x5233A46003677662FebBf53cD07029f7a2FB8f5A";
   const Obj = context.active
     ? { ...context, account: impersonate || context.account }
     : { ...contextNetwork, account: impersonate || contextNetwork.account };

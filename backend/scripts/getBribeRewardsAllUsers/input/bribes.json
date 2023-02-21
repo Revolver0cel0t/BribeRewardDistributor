@@ -2,29 +2,29 @@
   "0x65fc279e4c576bd1e09fa9b462688a1e2b8413d8": {
     "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1": {
       "decimals": 18,
-      "name": "WETH",
+      "symbol": "WETH",
       "amount": "100"
     },
     "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8": {
       "decimals": 6,
-      "name": "USDC",
+      "symbol": "USDC",
       "amount": "1000"
     }
   },
   "0x65ce7752d3b43cc71a3b4b4fd70d0b6f19858f57": {
     "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1": {
       "decimals": 18,
-      "name": "WETH",
+      "symbol": "WETH",
       "amount": "10"
     },
     "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8": {
       "decimals": 6,
-      "name": "USDC",
+      "symbol": "USDC",
       "amount": "2000"
     },
     "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1": {
       "decimals": 18,
-      "name": "DAI",
+      "symbol": "DAI",
       "amount": "5000"
     }
   }

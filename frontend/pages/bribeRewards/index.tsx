@@ -33,7 +33,7 @@ function BribeRewards() {
       <ConnectOverlay open={open} setOpen={setOpen} />
 
       <Box width="1072px" maxWidth="100%" position="relative" marginX="20px">
-        <Box width="100%">
+        <Box width="100%" mt="100px">
           <RewardsContainer>
             <Box
               padding="5px"
