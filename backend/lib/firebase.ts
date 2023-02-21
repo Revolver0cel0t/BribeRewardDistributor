@@ -1,4 +1,8 @@
 import * as admin from "firebase-admin";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
 
 const serviceAccount = {
   type: process.env.NEXT_PUBLIC_SERVICE_TYPE,

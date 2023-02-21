@@ -1,5 +1,9 @@
 import { ethers } from "ethers";
 import { Provider } from "ethers-multicall";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
 
 export const multicallSplitOnOverflow = async (
   multicallData: any[],

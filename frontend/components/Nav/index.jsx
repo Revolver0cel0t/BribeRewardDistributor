@@ -10,7 +10,6 @@ import { withTheme } from "@mui/styles";
 import {
   useTransactionModalDispatchers,
   useTransactions,
-  useTransactionsHaveBeenViewed,
   useTransactionsPosition,
 } from "stores/reduxSlices/transactions/hooks";
 import { chainIds } from "stores/constants";
@@ -21,7 +20,6 @@ function Nav() {
 
   const [chainOpened, setChainOpened] = useState(false);
 
-  const viewed = useTransactionsHaveBeenViewed();
   const [isTxComplete] = useTransactionsPosition();
 
   const [connectOpen, setConnectOpen] = useState(false);
@@ -29,8 +27,6 @@ function Nav() {
   const transactions = useTransactions();
   const { openQueue } = useTransactionModalDispatchers();
   const theme = useTheme();
-
-  console.log(account);
 
   const isConnected = Boolean(account);
 
@@ -69,7 +65,7 @@ function Nav() {
         paddingY="10px">
         {account ? (
           <>
-            {transactions.length > 0 && !viewed && (
+            {transactions.length > 0 && (
               <Box mr="10px">
                 <Button
                   size="s"

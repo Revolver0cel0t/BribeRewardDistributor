@@ -38,10 +38,14 @@ async function getFullDataForTokens(locks: any[], chainId: number) {
       maxCallsPerBatch: 300,
     }
   );
-  return ownerData.map((ownerOf: string, index: number) => ({
-    ...locks[index],
-    owner: ownerOf,
-  }));
+  return ownerData
+    .map((ownerOf: string, index: number) => ({
+      ...locks[index],
+      owner: ownerOf,
+    }))
+    .filter(
+      ({ owner }) => owner !== "0x0000000000000000000000000000000000000000"
+    );
 }
 
 async function getAllUnexpiredLocks(locks: any[], chainId: number) {
@@ -85,7 +89,6 @@ task("calculate-bribe-rewards", "").setAction(
       allSwapPairs(network.name),
       getLocks(network.name),
     ]);
-
     let allTokenRewards: Record<string, Record<string, BigNumber>> = {};
     let totalRewards: Record<string, BigNumber> = {};
 

@@ -2,13 +2,7 @@ import gql from "graphql-tag";
 
 export const allLocksQuery = gql`
   query ($skip: Int!) {
-    locks(
-      first: 1000
-      orderBy: tokenId
-      orderDirection: desc
-      where: { owner_not: "0x0000000000000000000000000000000000000000" }
-      skip: $skip
-    ) {
+    locks(first: 1000, orderBy: tokenId, orderDirection: desc, skip: $skip) {
       tokenId
     }
   }

@@ -34,8 +34,9 @@ contract MerkleClaimMultipleERC20 is Ownable {
         bytes32[] calldata proof
     ) external {
         require(!hasClaimed[to], "Already claimed rewards for token");
-
-        bytes32 leaf = keccak256(abi.encodePacked(tokens, amounts, to));
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(tokens, amounts, to)))
+        );
         bool isValidLeaf = MerkleProof.verify(proof, merkleRoot, leaf);
 
         require(!isValidLeaf, "Proof provided is not in merkle tree");
@@ -58,3 +59,8 @@ contract MerkleClaimMultipleERC20 is Ownable {
         }
     }
 }
+
+//USDC - 0x3e1D04dA1a47c13a3A09E7932E41Cc11c9DeB70d
+//DAI - 0x5aE6BB65A960AE8c95a5AC4b80061c2fF2717e9E
+//WETH - 0x9A25996A76617F29c0d7C5223D42774373Ea40B3
+//https://arb-mainnet.g.alchemy.com/v2/KR0VnTKpJ4s7w-IoXTdiSX1D35gtRv-E

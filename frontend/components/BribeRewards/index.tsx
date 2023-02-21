@@ -22,6 +22,8 @@ function RewardTable() {
 
   const [claimLoading, setClaimLoading] = useState(false);
 
+  console.log(data);
+
   const claimRewards = useClaimUserRewardsCallback(
     data?.tokens as string[],
     data?.amounts as string[],
@@ -58,7 +60,7 @@ function RewardTable() {
           <Typography>Please Connect to the correct Network</Typography>
         ) : data ? (
           <>
-            {data?.tokens.map((_, index: number) => (
+            {data?.tokens.map((_: any, index: number) => (
               <RewardItem
                 symbol={data.symbols[index]}
                 amount={data.amounts[index]}

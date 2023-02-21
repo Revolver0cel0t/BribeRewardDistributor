@@ -18,7 +18,7 @@ export const ETHERSCAN_URL = {
   [ChainIds.GOERLI]: "https://goerli.etherscan.io/",
 };
 
-export const supportedChainIds = [ChainIds.ARBITRUM];
+export const supportedChainIds = [ChainIds.ARBITRUM, ChainIds.ARBITRUM_GOERLI];
 
 const POLLING_INTERVAL = 12000;
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;

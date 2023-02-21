@@ -9,6 +9,7 @@ import { MerkleTree } from "merkletreejs";
 import { generateLeaf } from "./generateLeaf";
 import fs from "fs";
 import { getCurrentEpochTimestamp } from "../../utils";
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
 const jsonToFirestore = async () => {
   try {
@@ -40,32 +41,43 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
 
   const keys = Object.keys(rewardData);
 
-  const leaves = keys.map((key: string) => {
+  const rewards: any[] = [];
+
+  const leaves = keys.map((key: string, index: number) => {
     const reward = rewardData[key];
     const tokenKeys = Object.keys(reward);
 
-    return generateLeaf(
-      tokenKeys,
-      tokenKeys.map((key: string) => reward[key]),
-      key
-    );
+    rewards.push({
+      tokens: tokenKeys,
+      amounts: tokenKeys.map((key: string) => reward[key]),
+    });
+
+    return [rewards[index].tokens, rewards[index].amounts, key];
   });
 
-  const tree = new MerkleTree(leaves, keccakAlt, {
-    sortPairs: true,
-  });
+  const tree = StandardMerkleTree.of(leaves, [
+    "address[]",
+    "uint256[]",
+    "address",
+  ]);
 
-  const root = tree.getHexRoot();
+  const root = tree.root;
 
   console.log("root hash of the tree is :", root);
 
   let proofs: any = {};
   leaves.forEach((leaf: any, index: number) => {
-    const proof = tree.getHexProof(leaf);
+    let proof;
+    for (const [i, v] of tree.entries()) {
+      if (v[2].toLowerCase() === leaf[2].toLowerCase()) {
+        proof = tree.getProof(index);
+        break;
+      }
+    }
     const userRewardKey = keys[index];
     proofs[userRewardKey] = {
       proof: proof,
-      rewardInfo: rewardData[userRewardKey],
+      rewardInfo: rewards[index],
     };
   });
 

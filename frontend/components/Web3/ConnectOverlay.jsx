@@ -44,7 +44,7 @@ export const ConnectOverlay = ({ open, setOpen }) => {
       });
       setOpen(false);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (error?.code !== 4001) {
         try {
           await window.ethereum.request("wallet_addEthereumChain", [

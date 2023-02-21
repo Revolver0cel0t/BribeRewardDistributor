@@ -15,6 +15,7 @@ const {
 // register tasks
 import "./scripts/getBribeRewardsAllUsers";
 import "./scripts/generateMerkleTree";
+import "./scripts/deploy";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
@@ -60,6 +61,7 @@ module.exports = {
     arbGoerliRollup: {
       url: "https://arb-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_API_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 421613,
     },
     ...(process.env.ETH_MAINNET_FORK
       ? {
