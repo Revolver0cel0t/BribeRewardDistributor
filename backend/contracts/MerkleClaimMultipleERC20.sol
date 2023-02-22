@@ -12,11 +12,17 @@ contract MerkleClaimMultipleERC20 is Ownable {
 
     event Claim(address indexed to, address[] tokens, uint256[] amounts);
 
+    error AlreadyClaimed(); // Already claimed rewards for token
+    error InvalidProof(); // Proof provided is not in merkle tree
+    error ArrayLength(); //length of arrays must be equal
+
     constructor(bytes32 _merkleRoot) {
         merkleRoot = _merkleRoot;
     }
 
-    function emergencyWithdraw(address[] memory _tokens) external onlyOwner {
+    function emergencyWithdraw(
+        address[] memory _tokens
+    ) external payable onlyOwner {
         for (uint256 index = 0; index < _tokens.length; index++) {
             IERC20 token = IERC20(_tokens[index]);
             token.transfer(owner(), token.balanceOf(address(this)));
@@ -29,11 +35,15 @@ contract MerkleClaimMultipleERC20 is Ownable {
         address to,
         bytes32[] calldata proof
     ) external {
-        require(!hasClaimed[to], "Already claimed rewards for token");
-        bytes32 leaf = keccak256(abi.encode(tokens, amounts, to));
-        bool isValidLeaf = MerkleProof.verify(proof, merkleRoot, leaf);
+        if (hasClaimed[to]) revert AlreadyClaimed();
 
-        require(!isValidLeaf, "Proof provided is not in merkle tree");
+        if (tokens.length != amounts.length) revert ArrayLength();
+
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(tokens, amounts, to)))
+        );
+
+        if (!MerkleProof.verify(proof, merkleRoot, leaf)) revert InvalidProof();
 
         hasClaimed[to] = true;
 
@@ -48,8 +58,7 @@ contract MerkleClaimMultipleERC20 is Ownable {
         uint256[] memory _amounts
     ) internal {
         for (uint256 index = 0; index < _amounts.length; index++) {
-            address token = _tokens[index];
-            IERC20(token).transfer(_to, _amounts[index]);
+            IERC20(_tokens[index]).transfer(_to, _amounts[index]);
         }
     }
 }
