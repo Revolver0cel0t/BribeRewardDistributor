@@ -1,12 +1,9 @@
 import dotenv from "dotenv";
-import keccakAlt from "keccak256";
 import path from "path";
 import { task } from "hardhat/config";
 import { restore } from "firestore-export-import";
 dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
 import { admin, serviceAccount } from "../../lib/firebase";
-import { MerkleTree } from "merkletreejs";
-import { generateLeaf } from "./generateLeaf";
 import fs from "fs";
 import { getCurrentEpochTimestamp } from "../../utils";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
