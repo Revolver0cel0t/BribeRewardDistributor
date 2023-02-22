@@ -38,18 +38,11 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
 
   const keys = Object.keys(rewardData);
 
-  const rewards: any[] = [];
-
   const leaves = keys.map((key: string, index: number) => {
     const reward = rewardData[key];
     const tokenKeys = Object.keys(reward);
 
-    rewards.push({
-      tokens: tokenKeys,
-      amounts: tokenKeys.map((key: string) => reward[key]),
-    });
-
-    return [rewards[index].tokens, rewards[index].amounts, key];
+    return [tokenKeys, tokenKeys.map((key: string) => reward[key]), key];
   });
 
   const tree = StandardMerkleTree.of(leaves, [
@@ -66,16 +59,18 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
   leaves.forEach((leaf: any, index: number) => {
     let proof;
     for (const [i, v] of tree.entries()) {
-      if (v[2].toLowerCase() === leaf[2].toLowerCase()) {
+      if (v[2] === leaf[2]) {
         proof = tree.getProof(index);
+        proofs[v[2] as string] = {
+          proof: proof,
+          rewardInfo: {
+            tokens: v[0],
+            amounts: v[1],
+          },
+        };
         break;
       }
     }
-    const userRewardKey = keys[index];
-    proofs[userRewardKey] = {
-      proof: proof,
-      rewardInfo: rewards[index],
-    };
   });
 
   proofs["root"] = { proof: root };

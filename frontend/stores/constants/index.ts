@@ -17,5 +17,5 @@ export const chainIds = [ChainIds.ARBITRUM, ChainIds.ARBITRUM_GOERLI];
 
 export const merkleClaimAddress = {
   [ChainIds.ARBITRUM]: "",
-  [ChainIds.ARBITRUM_GOERLI]: "0x00351342CE16fcDf94c739bF9603691B0643fDAb",
+  [ChainIds.ARBITRUM_GOERLI]: "0xaBFEB602B4CD25bBAd093409D6AE4518f9a9fC0C",
 };
