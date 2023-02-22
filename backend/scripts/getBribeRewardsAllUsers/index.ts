@@ -81,7 +81,7 @@ task("get-epoch-start").setAction(async (_) => {
 
 task("calculate-bribe-rewards", "").setAction(
   async (_, { network, ethers }) => {
-    const chainId = network.config.chainId as number;
+    const chainId = 42161;
     const bribesFilePath = path.join(__dirname, "input", "bribes.json");
     const bribeInputs = JSON.parse(fs.readFileSync(bribesFilePath).toString());
     const [Voter, pairs, lockData] = await Promise.all([
