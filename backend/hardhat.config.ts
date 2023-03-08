@@ -7,6 +7,8 @@ dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-web3";
+
 const { subtask } = require("hardhat/config");
 const {
   TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS,
@@ -15,6 +17,7 @@ const {
 // register tasks
 import "./scripts/getBribeRewardsAllUsers";
 import "./scripts/generateMerkleTree";
+import "./scripts/epochFlip";
 import "./scripts/deploy";
 
 // ignore test files
@@ -42,6 +45,11 @@ module.exports = {
     local: {
       url: "http://127.0.0.1:8545/",
       accounts: [process.env.PRIVATE_KEY],
+      timeout: 100000000,
+      mocha: {
+        timeout: 100000000,
+      },
+      blockNumber: 65804153,
     },
     arbitrumOne: {
       url:
@@ -86,7 +94,7 @@ module.exports = {
     artifacts: "./artifacts",
   },
   mocha: {
-    timeout: 200000,
+    timeout: 100000000,
   },
   etherscan: {
     customChains: [

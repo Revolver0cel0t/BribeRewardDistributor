@@ -5,8 +5,8 @@ import path from "path";
 import eachLimit from "async/eachLimit";
 import { BigNumber } from "ethers";
 import { Contract } from "ethers-multicall";
-import VE_ABI from "./abis/veABI.json";
-import VOTER_ABI from "./abis/voterABI.json";
+import VE_ABI from "../../constants/abis/veABI.json";
+import VOTER_ABI from "../../constants/abis/voterABI.json";
 import { allSwapPairs, getLocks } from "../../subgraph/fetchers";
 import { VE_ADDRESS, VOTER_ADDRESS, WEI, ZERO } from "../../constants";
 import {
@@ -15,6 +15,7 @@ import {
 } from "../../lib/multicall";
 import { getCurrentEpochTimestamp } from "../../utils";
 import axios from "axios";
+import { getAddress } from "ethers/lib/utils";
 
 Object.defineProperties(BigNumber.prototype, {
   toJSON: {
@@ -24,47 +25,31 @@ Object.defineProperties(BigNumber.prototype, {
   },
 });
 
-async function getFullDataForTokens(locks: any[], chainId: number) {
-  const ethcallProvider = await getMulticallProvider(chainId);
-  const VotingEscrowContract = new Contract(VE_ADDRESS[chainId], VE_ABI);
-  const ownerOfCalls = locks.map(({ tokenId }: { tokenId: number }) =>
-    VotingEscrowContract.ownerOf(tokenId)
-  );
-
-  const ownerData = await multicallSplitOnOverflow(
-    ownerOfCalls,
-    ethcallProvider,
+async function getMultipleWeights(
+  locks: any[],
+  pair: any,
+  chainId: number,
+  provider: any
+) {
+  const weightCalls = locks.map(({ tokenId }: { tokenId: number }) => ({
+    methodName: "votes(uint256,address)",
+    methodParameters: [tokenId, pair.gaugeAddress],
+  }));
+  const results = await multicallSplitOnOverflow(
+    VOTER_ADDRESS[chainId],
+    VOTER_ABI,
+    weightCalls,
+    "Voter",
+    provider,
     {
       maxCallsPerBatch: 300,
+      blockNumber: "65886487",
     }
   );
-  return ownerData
-    .map((ownerOf: string, index: number) => ({
-      ...locks[index],
-      owner: ownerOf,
-    }))
-    .filter(
-      ({ owner }) => owner !== "0x0000000000000000000000000000000000000000"
-    );
-}
-
-async function getAllUnexpiredLocks(locks: any[], chainId: number) {
-  const ethcallProvider = await getMulticallProvider(chainId);
-  const VotingEscrowContract = new Contract(VE_ADDRESS[chainId], VE_ABI);
-  const lockedEndCalls = locks.map(({ tokenId }: { tokenId: number }) =>
-    VotingEscrowContract.locked__end(tokenId)
+  const convertedResults = results.map((result) =>
+    BigNumber.from(result[0].hex)
   );
-  const lockedEnds = await multicallSplitOnOverflow(
-    lockedEndCalls,
-    ethcallProvider,
-    {
-      maxCallsPerBatch: 300,
-    }
-  );
-  return lockedEnds.flatMap((lockedEnd: BigNumber, index: number) => {
-    const currentEpochTimestamp = getCurrentEpochTimestamp();
-    return !lockedEnd.lt(currentEpochTimestamp) ? [locks[index]] : [];
-  });
+  return convertedResults;
 }
 
 task("get-block-number-for-epoch-start").setAction(async (_) => {
@@ -84,27 +69,35 @@ task("calculate-bribe-rewards", "").setAction(
     const chainId = 42161;
     const bribesFilePath = path.join(__dirname, "input", "bribes.json");
     const bribeInputs = JSON.parse(fs.readFileSync(bribesFilePath).toString());
-    const [Voter, pairs, lockData] = await Promise.all([
+    const [Voter, pairs, locks] = await Promise.all([
       ethers.getContractAt(VOTER_ABI, VOTER_ADDRESS[chainId]),
       allSwapPairs(network.name),
-      getLocks(network.name),
+      getLocks(network.name, 65886487),
     ]);
     let allTokenRewards: Record<string, Record<string, BigNumber>> = {};
     let totalRewards: Record<string, BigNumber> = {};
 
-    const unexpiredLocks = await getAllUnexpiredLocks(lockData, chainId);
+    // console.log("Fecthing unexpired locks");
+    // const unexpiredLocks = await getAllUnexpiredLocks(
+    //   lockData,
+    //   chainId,
+    //   provider
+    // );
 
-    const locks = await getFullDataForTokens(unexpiredLocks, chainId);
+    // console.log("Fecthing lock information");
+    // const locks = await getFullDataForTokens(unexpiredLocks, chainId, provider);
 
     console.log({ locks: locks.length, pairs: pairs.length });
 
     for (let i = 0; i < pairs.length; i++) {
       const pair = pairs[i];
-      const rewardData = bribeInputs[pair.bribe.address];
+      const rewardData = bribeInputs[getAddress(pair.bribe.address)];
       if (!rewardData) continue;
 
+      console.log("Fecthing gauge weight");
       const totalGaugeWeight: BigNumber = await Voter.weights(
-        pair.gaugeAddress
+        pair.gaugeAddress,
+        { blockTag: 65886487 }
       );
       const tokenKeys = Object.keys(rewardData);
 
@@ -114,14 +107,17 @@ task("calculate-bribe-rewards", "").setAction(
         }/${pair.token1.symbol}`
       );
 
-      await eachLimit(
+      console.log("Fecthing weights for locks ");
+      const allWeights = await getMultipleWeights(
         locks,
-        50,
-        async ({ tokenId, owner }: { tokenId: string; owner: string }) => {
-          const balanceOf: BigNumber = await Voter.votes(
-            tokenId,
-            pair.gaugeAddress
-          );
+        pair,
+        chainId,
+        ethers.provider
+      );
+      locks.forEach(
+        ({ owner: smallOwner }: { owner: string }, index: number) => {
+          const owner = getAddress(smallOwner);
+          const balanceOf = allWeights[index];
           if (balanceOf.gt(0)) {
             const rewardMultiplierForToken = balanceOf
               .mul(WEI)

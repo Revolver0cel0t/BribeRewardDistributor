@@ -16,7 +16,7 @@ const fetcher = async (
 };
 
 //gets all locks, paginate if required
-export const getLocks = async (network: any) => {
+export const getLocks = async (network: any, blockNumber?: number) => {
   let paginationRequired = true;
   let data: any = [];
   let skip = 0;

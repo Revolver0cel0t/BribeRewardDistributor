@@ -7,6 +7,7 @@ import { admin, serviceAccount } from "../../lib/firebase";
 import fs from "fs";
 import { getCurrentEpochTimestamp } from "../../utils";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import { BigNumber } from "ethers";
 
 const jsonToFirestore = async () => {
   try {
@@ -56,22 +57,16 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
   console.log("root hash of the tree is :", root);
 
   let proofs: any = {};
-  leaves.forEach((leaf: any, index: number) => {
-    let proof;
-    for (const [i, v] of tree.entries()) {
-      if (v[2] === leaf[2]) {
-        proof = tree.getProof(index);
-        proofs[v[2] as string] = {
-          proof: proof,
-          rewardInfo: {
-            tokens: v[0],
-            amounts: v[1],
-          },
-        };
-        break;
-      }
-    }
-  });
+  for (const [index, leaf] of tree.entries()) {
+    const proof = tree.getProof(index);
+    proofs[leaf[2] as string] = {
+      proof: proof,
+      rewardInfo: {
+        tokens: leaf[0],
+        amounts: leaf[1],
+      },
+    };
+  }
 
   proofs["root"] = { proof: root };
 
@@ -83,4 +78,61 @@ task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
   await jsonToFirestore();
 
   console.log("Done");
+});
+
+task("verify-amounts", "").setAction(async (_, { network, ethers }) => {
+  const rewardFilepath = path.resolve(
+    __dirname,
+    "../getBribeRewardsAllUsers/output/totalRewardAmts.json"
+  );
+  const rewardData = JSON.parse(fs.readFileSync(rewardFilepath).toString());
+
+  const proofsFilepath = path.resolve(__dirname, "./output/proofs.json");
+  const proofs = JSON.parse(fs.readFileSync(proofsFilepath).toString());
+
+  const rewardKeys = Object.keys(rewardData);
+  const proofKeys = Object.keys(proofs);
+
+  const proofData = proofs[proofKeys[0]];
+
+  const proofRewardKeys = Object.keys(proofData);
+
+  console.log(
+    "Total users to distro rewards to : ",
+    proofRewardKeys.length - 1
+  );
+
+  let amts: Record<string, BigNumber> = {};
+  let users: Record<string, boolean> = {};
+
+  proofRewardKeys.forEach((key) => {
+    if (key !== "root") {
+      if (!users[key.toLowerCase()]) {
+        users[key.toLowerCase()] = true;
+      } else {
+        console.log(key, "is repeating");
+        throw new Error();
+      }
+      proofData[key].rewardInfo.tokens.forEach(
+        (token: string, index: number) => {
+          if (!amts[token]) amts[token] = BigNumber.from("0");
+          amts[token] = amts[token].add(
+            proofData[key].rewardInfo.amounts[index]
+          );
+        }
+      );
+    }
+  });
+
+  rewardKeys.forEach((key) => {
+    console.log(rewardData[key], amts[key].toString(), key);
+
+    if (!BigNumber.from(rewardData[key]).eq(amts[key])) {
+      throw new Error();
+    } else {
+      console.log(`Amounts for ${key} valid`);
+    }
+  });
+
+  console.log("Done.");
 });

@@ -19,3 +19,11 @@ export const VE_ADDRESS: AddressMapping = {
 export const VOTER_ADDRESS: AddressMapping = {
   [ChainId.ARBITRUM]: "0xE6CCdC80c4838B670c94DA07E8338589dEc5E628",
 };
+
+export const MINTER_ADDRESS: AddressMapping = {
+  [ChainId.ARBITRUM]: "0x2513DB1B4dAc06CcB03931321292045fdBc573b0",
+};
+
+export const EPOCH_FLIPPER_ADDRESS: AddressMapping = {
+  [ChainId.ARBITRUM]: "0x7aE6DC970aB9Fe4aa36bA6a3BfA492A90Ba642f4",
+};

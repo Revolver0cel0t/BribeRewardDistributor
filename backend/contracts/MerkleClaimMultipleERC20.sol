@@ -14,7 +14,7 @@ contract MerkleClaimMultipleERC20 is Ownable {
 
     error AlreadyClaimed(); // Already claimed rewards for token
     error InvalidProof(); // Proof provided is not in merkle tree
-    error ArrayLength(); //length of arrays must be equal
+    error ArrayLength(); // Length of arrays must be equal
 
     constructor(bytes32 _merkleRoot) {
         merkleRoot = _merkleRoot;
@@ -38,7 +38,6 @@ contract MerkleClaimMultipleERC20 is Ownable {
         if (hasClaimed[to]) revert AlreadyClaimed();
 
         if (tokens.length != amounts.length) revert ArrayLength();
-
         bytes32 leaf = keccak256(
             bytes.concat(keccak256(abi.encode(tokens, amounts, to)))
         );
@@ -62,7 +61,3 @@ contract MerkleClaimMultipleERC20 is Ownable {
         }
     }
 }
-
-//USDC - 0x3e1D04dA1a47c13a3A09E7932E41Cc11c9DeB70d
-//DAI - 0x5aE6BB65A960AE8c95a5AC4b80061c2fF2717e9E
-//WETH - 0x9A25996A76617F29c0d7C5223D42774373Ea40B3
