@@ -5,7 +5,6 @@ import { restore } from "firestore-export-import";
 dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
 import { admin, serviceAccount } from "../../lib/firebase";
 import fs from "fs";
-import { getCurrentEpochTimestamp } from "../../utils";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { BigNumber } from "ethers";
 
@@ -30,55 +29,57 @@ const writeToFile = (array: any, filename: string) => {
   );
 };
 
-task("generate-merkle-tree", "").setAction(async (_, { network, ethers }) => {
-  const rewardFilepath = path.resolve(
-    __dirname,
-    "../getBribeRewardsAllUsers/output/rewards.json"
-  );
-  const rewardData = JSON.parse(fs.readFileSync(rewardFilepath).toString());
+task("generate-merkle-tree", "")
+  .addParam("blocktimestamp", "Timestamp for bribes")
+  .setAction(async ({ blocktimestamp }, { network, ethers }) => {
+    const rewardFilepath = path.resolve(
+      __dirname,
+      "../getBribeRewardsAllUsers/output/rewards.json"
+    );
+    const rewardData = JSON.parse(fs.readFileSync(rewardFilepath).toString());
 
-  const keys = Object.keys(rewardData);
+    const keys = Object.keys(rewardData);
 
-  const leaves = keys.map((key: string, index: number) => {
-    const reward = rewardData[key];
-    const tokenKeys = Object.keys(reward);
+    const leaves = keys.map((key: string, index: number) => {
+      const reward = rewardData[key];
+      const tokenKeys = Object.keys(reward);
 
-    return [tokenKeys, tokenKeys.map((key: string) => reward[key]), key];
+      return [tokenKeys, tokenKeys.map((key: string) => reward[key]), key];
+    });
+
+    const tree = StandardMerkleTree.of(leaves, [
+      "address[]",
+      "uint256[]",
+      "address",
+    ]);
+
+    const root = tree.root;
+
+    console.log("root hash of the tree is :", root);
+
+    let proofs: any = {};
+    for (const [index, leaf] of tree.entries()) {
+      const proof = tree.getProof(index);
+      proofs[leaf[2] as string] = {
+        proof: proof,
+        rewardInfo: {
+          tokens: leaf[0],
+          amounts: leaf[1],
+        },
+      };
+    }
+
+    proofs["root"] = { proof: root };
+
+    writeToFile(
+      { [`BRIBE-REWARDS-EPOCH-${blocktimestamp}`]: proofs },
+      "proofs.json"
+    );
+
+    await jsonToFirestore();
+
+    console.log("Done");
   });
-
-  const tree = StandardMerkleTree.of(leaves, [
-    "address[]",
-    "uint256[]",
-    "address",
-  ]);
-
-  const root = tree.root;
-
-  console.log("root hash of the tree is :", root);
-
-  let proofs: any = {};
-  for (const [index, leaf] of tree.entries()) {
-    const proof = tree.getProof(index);
-    proofs[leaf[2] as string] = {
-      proof: proof,
-      rewardInfo: {
-        tokens: leaf[0],
-        amounts: leaf[1],
-      },
-    };
-  }
-
-  proofs["root"] = { proof: root };
-
-  writeToFile(
-    { [`BRIBE-REWARDS-EPOCH-${getCurrentEpochTimestamp()}`]: proofs },
-    "proofs.json"
-  );
-
-  await jsonToFirestore();
-
-  console.log("Done");
-});
 
 task("verify-amounts", "").setAction(async (_, { network, ethers }) => {
   const rewardFilepath = path.resolve(

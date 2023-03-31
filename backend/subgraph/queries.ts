@@ -1,13 +1,14 @@
 import gql from "graphql-tag";
 
 export const allLocksQuery = gql`
-  query ($skip: Int!) {
+  query ($skip: Int!, $blockNumber: Int!) {
     locks(
-      block: { number: 65886487 }
+      block: { number: $blockNumber }
       first: 1000
       orderBy: tokenId
       orderDirection: desc
       skip: $skip
+      where: { owner_not: "0x0000000000000000000000000000000000000000" }
     ) {
       tokenId
       owner

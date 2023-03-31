@@ -109,19 +109,27 @@ export async function flipEpoch(
   //firstly, update period
   await minter.update_period();
 
+  console.log("period updated");
+
   //retrieve all the swap pairs with gauges
   const swapPairs = await allSwapPairs(network.name);
 
   //distribute Fees, also retrieve error pairs
   const feeErrorPairs = await distributeFees(swapPairs, voter);
-
+  console.log("fees distributed");
   //distribute Emissions, also retrieve error pairs
   const emissionErrorPairs = await distributeEmissions(swapPairs, voter);
+  console.log("emissions distributed");
 
   //boost Emissions, also retrieve error pairs
   const boostErrorPairs = await boostEmissions(swapPairs, epochFlipper);
+  console.log("boost distributed");
 
-  const errorPairs = { feeErrorPairs, emissionErrorPairs, boostErrorPairs };
+  const errorPairs = {
+    feeErrorPairs,
+    emissionErrorPairs,
+    boostErrorPairs,
+  };
   console.log(errorPairs);
   const errorFilePath = path.join(__dirname, "output", "errorsPairs.json");
   fs.writeFileSync(errorFilePath, JSON.stringify(errorPairs));

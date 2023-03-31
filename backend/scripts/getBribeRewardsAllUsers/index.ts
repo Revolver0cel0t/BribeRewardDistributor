@@ -2,18 +2,11 @@ import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
 //@ts-ignore
-import eachLimit from "async/eachLimit";
 import { BigNumber } from "ethers";
-import { Contract } from "ethers-multicall";
-import VE_ABI from "../../constants/abis/veABI.json";
 import VOTER_ABI from "../../constants/abis/voterABI.json";
 import { allSwapPairs, getLocks } from "../../subgraph/fetchers";
-import { VE_ADDRESS, VOTER_ADDRESS, WEI, ZERO } from "../../constants";
-import {
-  getMulticallProvider,
-  multicallSplitOnOverflow,
-} from "../../lib/multicall";
-import { getCurrentEpochTimestamp } from "../../utils";
+import { VOTER_ADDRESS, WEI, ZERO } from "../../constants";
+import { multicallSplitOnOverflow } from "../../lib/multicall";
 import axios from "axios";
 import { getAddress } from "ethers/lib/utils";
 
@@ -29,7 +22,8 @@ async function getMultipleWeights(
   locks: any[],
   pair: any,
   chainId: number,
-  provider: any
+  provider: any,
+  blocknumber: string
 ) {
   const weightCalls = locks.map(({ tokenId }: { tokenId: number }) => ({
     methodName: "votes(uint256,address)",
@@ -43,7 +37,7 @@ async function getMultipleWeights(
     provider,
     {
       maxCallsPerBatch: 300,
-      blockNumber: "65886487",
+      blockNumber: blocknumber,
     }
   );
   const convertedResults = results.map((result) =>
@@ -52,31 +46,45 @@ async function getMultipleWeights(
   return convertedResults;
 }
 
-task("get-block-number-for-epoch-start").setAction(async (_) => {
-  const result = await axios.get(
-    `https://coins.llama.fi/block/arbitrum/${getCurrentEpochTimestamp()}`
-  );
+task("get-block-number-for-epoch-start")
+  .addParam("blocktimestamp", "Block Timestamp")
+  .setAction(async ({ blocktimestamp }) => {
+    const result = await axios.get(
+      `https://coins.llama.fi/block/arbitrum/${blocktimestamp}`
+    );
 
-  console.log("Block number", result.data.height);
-});
+    console.log("Block number", result.data.height);
+  });
 
-task("get-epoch-start").setAction(async (_) => {
-  console.log(getCurrentEpochTimestamp());
-});
-
-task("calculate-bribe-rewards", "").setAction(
-  async (_, { network, ethers }) => {
+task("calculate-bribe-rewards", "")
+  .addParam("blocknumber", "Block Number")
+  .setAction(async ({ blocknumber }, { network, ethers }) => {
     const chainId = 42161;
     const bribesFilePath = path.join(__dirname, "input", "bribes.json");
     const bribeInputs = JSON.parse(fs.readFileSync(bribesFilePath).toString());
-    const [Voter, pairs, locks] = await Promise.all([
-      ethers.getContractAt(VOTER_ABI, VOTER_ADDRESS[chainId]),
+    const [pairs, locks] = await Promise.all([
       allSwapPairs(network.name),
-      getLocks(network.name, 65886487),
+      getLocks(network.name, blocknumber),
     ]);
     let allTokenRewards: Record<string, Record<string, BigNumber>> = {};
     let totalRewards: Record<string, BigNumber> = {};
 
+    const tokenKeys = Object.keys(bribeInputs);
+
+    let distroAmts: any = {};
+    tokenKeys.forEach((key) => {
+      Object.keys(bribeInputs[key]).forEach((val) => {
+        if (!distroAmts[val]) {
+          distroAmts[val] = "0";
+        }
+        distroAmts[val] = BigNumber.from(distroAmts[val])
+          .add(bribeInputs[key][val].amount)
+          .toString();
+      });
+    });
+
+    console.log("Total amounts to distro : ", distroAmts);
+    console.log("Total pairs to calc for : ", tokenKeys.length);
     // console.log("Fecthing unexpired locks");
     // const unexpiredLocks = await getAllUnexpiredLocks(
     //   lockData,
@@ -89,16 +97,13 @@ task("calculate-bribe-rewards", "").setAction(
 
     console.log({ locks: locks.length, pairs: pairs.length });
 
+    let c = 0;
     for (let i = 0; i < pairs.length; i++) {
       const pair = pairs[i];
       const rewardData = bribeInputs[getAddress(pair.bribe.address)];
       if (!rewardData) continue;
-
+      c++;
       console.log("Fecthing gauge weight");
-      const totalGaugeWeight: BigNumber = await Voter.weights(
-        pair.gaugeAddress,
-        { blockTag: 65886487 }
-      );
       const tokenKeys = Object.keys(rewardData);
 
       console.log(
@@ -112,7 +117,12 @@ task("calculate-bribe-rewards", "").setAction(
         locks,
         pair,
         chainId,
-        ethers.provider
+        ethers.provider,
+        blocknumber
+      );
+      const totalGaugeWeight = allWeights.reduce(
+        (prev, acc) => prev.add(acc),
+        BigNumber.from(0)
       );
       locks.forEach(
         ({ owner: smallOwner }: { owner: string }, index: number) => {
@@ -151,6 +161,8 @@ task("calculate-bribe-rewards", "").setAction(
       );
     }
 
+    console.log("Total pairs calculated for : ", c);
+
     console.log(
       "Total Rewards being distributed : ",
       JSON.stringify(totalRewards)
@@ -166,5 +178,4 @@ task("calculate-bribe-rewards", "").setAction(
     const outputFilePath = path.join(__dirname, "output", "rewards.json");
     fs.writeFileSync(outputFilePath, JSON.stringify(allTokenRewards));
     console.log("Done");
-  }
-);
+  });
