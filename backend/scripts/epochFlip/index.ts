@@ -2,15 +2,17 @@ import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
 //@ts-ignore
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import VOTER_ABI from "../../constants/abis/voterABI.json";
 import MINTER_ABI from "../../constants/abis/minterABI.json";
+import GAUGE_ABI from "../../constants/abis/gaugeABI.json";
 import EPOCH_FLIPPER_ABI from "../../constants/abis/epochFlipperABI.json";
 import { allSwapPairs } from "../../subgraph/fetchers";
 import {
   VOTER_ADDRESS,
   MINTER_ADDRESS,
   EPOCH_FLIPPER_ADDRESS,
+  GOV_TOKEN_ADDRESS,
 } from "../../constants";
 import { getAddress } from "ethers/lib/utils";
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
@@ -56,6 +58,28 @@ async function distributeEmissions(swapPairs: any[], voterContract: Contract) {
     }
   }
   return errorPairs;
+}
+
+async function getRewardRates(
+  swapPairs: any[],
+  ethers: typeof import("/Users/rev/BribeRewardDistributor/backend/node_modules/ethers/lib/ethers") &
+    HardhatEthersHelpers
+) {
+  let rewardRates: any = {};
+  for (let index = 0; index < swapPairs.length; index++) {
+    try {
+      const pair = swapPairs[index];
+      const gaugeContract = await ethers.getContractAt(
+        GAUGE_ABI,
+        pair.gaugeAddress
+      );
+      const rewardRate: BigNumber = await gaugeContract.rewardRate(
+        GOV_TOKEN_ADDRESS[42161]
+      );
+      rewardRates[pair.gaugeAddress] = rewardRate.toString();
+    } catch (error) {}
+  }
+  return rewardRates;
 }
 
 async function boostEmissions(swapPairs: any[], epochFlipper: Contract) {
@@ -133,10 +157,25 @@ export async function flipEpoch(
   console.log(errorPairs);
   const errorFilePath = path.join(__dirname, "output", "errorsPairs.json");
   fs.writeFileSync(errorFilePath, JSON.stringify(errorPairs));
+  console.log("error pairs stored");
+
+  const rewardRates = await getRewardRates(swapPairs, ethers);
+  const rewardRateFilePath = path.join(__dirname, "output", "rewardRates.json");
+  fs.writeFileSync(rewardRateFilePath, JSON.stringify(rewardRates));
+  console.log("reward rates calculated");
 
   console.log("Done, check output folder to check for error Pairs");
 }
 
 task("flip-epoch", "").setAction(async (_, { network, ethers }) => {
   await flipEpoch(network, ethers);
+});
+
+task("calculate-reward-rate", "").setAction(async (_, { network, ethers }) => {
+  //retrieve all the swap pairs with gauges
+  const swapPairs = await allSwapPairs(network.name);
+  const rewardRates = await getRewardRates(swapPairs, ethers);
+  const rewardRateFilePath = path.join(__dirname, "output", "rewardRates.json");
+  fs.writeFileSync(rewardRateFilePath, JSON.stringify(rewardRates));
+  console.log("reward rates calculated");
 });
