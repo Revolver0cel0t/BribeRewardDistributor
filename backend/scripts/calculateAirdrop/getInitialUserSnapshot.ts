@@ -66,8 +66,10 @@ task(
     const selectedPairs: Pair[] = swapPairs.filter((pair: Pair) =>
       addressesArray.includes(pair.address)
     );
-    const users = (await getUsers(network.name, blocknumber)).map(
-      ({ id }: { id: string }) => id
+    const gaugeAddresses = selectedPairs.map((pair) => pair.gaugeAddress);
+    //filter out the gauge contract from airdrop calculations
+    const users = (await getUsers(network.name, blocknumber)).flatMap(
+      ({ id }: { id: string }) => (gaugeAddresses.includes(id) ? [] : [id])
     );
     for (var index = 0; index < selectedPairs.length; index++) {
       const balances = await getBalanceData(
