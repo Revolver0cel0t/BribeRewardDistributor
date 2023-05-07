@@ -62,7 +62,7 @@ export const allPairDataQuerySwap = gql`
   }
 `;
 
-export const allPairDataQuerySwapWithoutGauge = gql`
+export const allPairDataQuerySwapWithGauge = gql`
   query PairsQuery {
     pairs: swapPairs(first: 1000, orderBy: volumeUSD, orderDirection: desc) {
       address: id

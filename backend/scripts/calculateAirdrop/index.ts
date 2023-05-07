@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
 import {
-  allPairDataSwapWithoutGauge,
+  allPairDataSwapWithGauge,
   getTokenPriceUSD,
 } from "../../subgraph/fetchers";
 import ROUTER_ABI from "../../constants/abis/routerABI.json";
@@ -168,7 +168,7 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
       const userData = JSON.parse(fs.readFileSync(filePath).toString());
 
       const swapPairs: Pair[] = (
-        await allPairDataSwapWithoutGauge(network.name)
+        await allPairDataSwapWithGauge(network.name)
       ).filter((pair: Pair) => addressesArray.includes(pair.address));
 
       let airdropPerUser: {

@@ -2,7 +2,7 @@ import request from "graphql-request";
 import {
   allLocksQuery,
   allPairDataQuerySwap,
-  allPairDataQuerySwapWithoutGauge,
+  allPairDataQuerySwapWithGauge,
   allUsersQuery,
   liqSnapshotsQuery,
   tokenDayDatasQuery,
@@ -63,10 +63,10 @@ export const allSwapPairs = async (network: any) => {
   return data;
 };
 
-export const allPairDataSwapWithoutGauge = async (network: any) => {
+export const allPairDataSwapWithGauge = async (network: any) => {
   const { pairs: data } = await fetcher(
     network,
-    allPairDataQuerySwapWithoutGauge,
+    allPairDataQuerySwapWithGauge,
     undefined
   );
   return data;

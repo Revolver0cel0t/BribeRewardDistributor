@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
-import { allPairDataSwapWithoutGauge, getUsers } from "../../subgraph/fetchers";
+import { allPairDataSwapWithGauge, getUsers } from "../../subgraph/fetchers";
 import PAIR_ABI from "../../constants/abis/pairABI.json";
 import GAUGE_ABI from "../../constants/abis/gaugeABI.json";
 import { multicallSplitOnOverflow } from "../../lib/multicall";
@@ -62,19 +62,17 @@ task(
   .addVariadicPositionalParam("addressesArray")
   .setAction(async ({ blocknumber, addressesArray }, { network, ethers }) => {
     let userBalancesForPool: Record<string, UserData> = {};
-    const swapPairs = await allPairDataSwapWithoutGauge(network.name);
+    const swapPairs = await allPairDataSwapWithGauge(network.name);
     const selectedPairs: Pair[] = swapPairs.filter((pair: Pair) =>
       addressesArray.includes(pair.address)
     );
     const users = (await getUsers(network.name, blocknumber)).map(
       ({ id }: { id: string }) => id
     );
-    for (var index = 0; index < addressesArray.length; index++) {
+    for (var index = 0; index < selectedPairs.length; index++) {
       const balances = await getBalanceData(
         users,
-        selectedPairs.filter(
-          (pair) => pair.address === addressesArray[index]
-        )[0],
+        selectedPairs[index],
         blocknumber,
         ethers.provider
       );
@@ -88,7 +86,7 @@ task(
         }
       });
 
-      userBalancesForPool[addressesArray[index]] = {
+      userBalancesForPool[selectedPairs[index].address] = {
         users: filteredUsers,
         balances: filteredBalances,
       };
