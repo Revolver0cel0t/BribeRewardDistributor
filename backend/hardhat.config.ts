@@ -19,6 +19,7 @@ import "./scripts/getBribeRewardsAllUsers";
 import "./scripts/generateMerkleTree";
 import "./scripts/epochFlip";
 import "./scripts/deploy";
+import "./scripts/calculateAirdrop";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(

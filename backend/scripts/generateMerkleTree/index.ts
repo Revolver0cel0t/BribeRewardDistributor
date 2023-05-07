@@ -31,7 +31,7 @@ const writeToFile = (array: any, filename: string) => {
 
 task("generate-merkle-tree", "")
   .addParam("blocktimestamp", "Timestamp for bribes")
-  .setAction(async ({ blocktimestamp }, { network, ethers }) => {
+  .setAction(async ({ blocktimestamp }) => {
     const rewardFilepath = path.resolve(
       __dirname,
       "../getBribeRewardsAllUsers/output/rewards.json"
@@ -40,7 +40,7 @@ task("generate-merkle-tree", "")
 
     const keys = Object.keys(rewardData);
 
-    const leaves = keys.map((key: string, index: number) => {
+    const leaves = keys.map((key: string) => {
       const reward = rewardData[key];
       const tokenKeys = Object.keys(reward);
 
@@ -81,7 +81,7 @@ task("generate-merkle-tree", "")
     console.log("Done");
   });
 
-task("verify-amounts", "").setAction(async (_, { network, ethers }) => {
+task("verify-amounts", "").setAction(async (_) => {
   const rewardFilepath = path.resolve(
     __dirname,
     "../getBribeRewardsAllUsers/output/totalRewardAmts.json"

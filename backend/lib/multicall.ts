@@ -1,22 +1,8 @@
-import { ethers } from "ethers";
 import { Provider } from "ethers-multicall";
 import dotenv from "dotenv";
 import path from "path";
-import {
-  Multicall,
-  ContractCallResults,
-  ContractCallContext,
-} from "ethereum-multicall";
-
-let provider = ethers.getDefaultProvider();
-
-// you can use any ethers provider context here this example is
-// just shows passing in a default provider, ethers hold providers in
-// other context like wallet, signer etc all can be passed in as well.
-const multicall = new Multicall({
-  ethersProvider: provider,
-  tryAggregate: true,
-});
+import { Multicall, ContractCallContext } from "ethereum-multicall";
+import { ethers } from "ethers";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
 
@@ -30,11 +16,11 @@ async function retry(maxRetries: number, fn: any): Promise<any> {
 }
 
 export const multicallSplitOnOverflow = async (
-  address,
-  abi,
-  multicalls,
-  reference,
-  provider,
+  address: string,
+  abi: any[],
+  multicalls: any[],
+  reference: string,
+  provider: any,
   options?: {
     maxCallsPerBatch: number;
     blockNumber: string;
@@ -67,15 +53,13 @@ export const multicallSplitOnOverflow = async (
   const splitResults = await retry(5, Promise.all(calls));
   return splitResults.flatMap((value: any) => {
     const returns = value.results[reference].callsReturnContext;
-    return returns.map(({ returnValues }) => returnValues);
+    return returns.map(
+      ({ returnValues }: { returnValues: any }) => returnValues
+    );
   });
 };
 
-export const getMulticallProvider = async (chainId: number, provider?: any) => {
-  const providers = new ethers.providers.AlchemyProvider(
-    chainId,
-    process.env.ALCHEMY_API_KEY
-  );
+export const getMulticallProvider = async (provider?: any) => {
   const ethcallProvider = new Provider(provider, 42161);
   return ethcallProvider;
 };

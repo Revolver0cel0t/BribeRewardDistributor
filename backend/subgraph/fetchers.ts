@@ -1,5 +1,14 @@
 import request from "graphql-request";
-import { allLocksQuery, allPairDataQuerySwap } from "./queries";
+import {
+  allLocksQuery,
+  allPairDataQuerySwap,
+  allPairDataQuerySwapWithoutGauge,
+  allUsersQuery,
+  liqSnapshotsQuery,
+  tokenDayDatasQuery,
+} from "./queries";
+import { ethers } from "ethers";
+import { Token } from "../scripts/calculateAirdrop";
 
 const fetcher = async (
   network: string,
@@ -8,14 +17,13 @@ const fetcher = async (
 ) => {
   const ENDPOINT = {
     arbitrumOne:
-      "https://api.thegraph.com/subgraphs/name/revolver0cel0t/3xcalibur-arbitrum",
+      "https://api.thegraph.com/subgraphs/name/revolver0cel0t/xcal-arbitrum",
     local:
-      "https://api.thegraph.com/subgraphs/name/revolver0cel0t/3xcalibur-arbitrum",
+      "https://api.thegraph.com/subgraphs/name/revolver0cel0t/xcal-arbitrum",
   }[network];
   return request(ENDPOINT || "", query, variables);
 };
 
-//gets all locks, paginate if required
 export const getLocks = async (network: any, blockNumber?: number) => {
   let paginationRequired = true;
   let data: any = [];
@@ -31,11 +39,76 @@ export const getLocks = async (network: any, blockNumber?: number) => {
   return data;
 };
 
+export const getUsers = async (network: any, blockNumber?: number) => {
+  let paginationRequired = true;
+  let data: any = [];
+  let skip = 0;
+  while (paginationRequired) {
+    const { users } = await fetcher(network, allUsersQuery, {
+      skip: skip++ * 1000,
+      blockNumber: Number(blockNumber),
+    });
+    if (users.length === 0) paginationRequired = false;
+    data = [...data, ...users];
+  }
+  return data;
+};
+
 export const allSwapPairs = async (network: any) => {
   const { pairs: data } = await fetcher(
     network,
     allPairDataQuerySwap,
     undefined
   );
+  return data;
+};
+
+export const allPairDataSwapWithoutGauge = async (network: any) => {
+  const { pairs: data } = await fetcher(
+    network,
+    allPairDataQuerySwapWithoutGauge,
+    undefined
+  );
+  return data;
+};
+
+export const getTokenPriceUSD = async (
+  network: any,
+  blockTimestamp: number,
+  token: Token
+) => {
+  const { tokenDayDatas } = await fetcher(network, tokenDayDatasQuery, {
+    token: token.address,
+    blockTimestamp,
+  });
+  const splitString = (tokenDayDatas[0].priceUSD as string).split(".");
+  splitString[1] = splitString[1].slice(0, token.decimals);
+  return ethers.utils.parseUnits(
+    splitString[0] + "." + splitString[1],
+    Number(token.decimals)
+  );
+};
+
+export const getLiqSnapshotsForPair = async (
+  network: any,
+  blockNumber: number,
+  pair: string
+) => {
+  let paginationRequired = true;
+  let data: any = [];
+  let skip = 0;
+  while (paginationRequired) {
+    const { liquidityPositionSnapshots } = await fetcher(
+      network,
+      liqSnapshotsQuery,
+      {
+        skip: skip++ * 1000,
+        blockNumber: Number(blockNumber),
+        pair,
+      }
+    );
+    if (liquidityPositionSnapshots.length === 0) paginationRequired = false;
+    data = [...data, ...liquidityPositionSnapshots];
+  }
   return data;
 };

@@ -61,3 +61,78 @@ export const allPairDataQuerySwap = gql`
     }
   }
 `;
+
+export const allPairDataQuerySwapWithoutGauge = gql`
+  query PairsQuery {
+    pairs: swapPairs(first: 1000, orderBy: volumeUSD, orderDirection: desc) {
+      address: id
+      reserve0
+      reserve1
+      reserveUSD
+      totalSupply
+      bribe {
+        bribeAddress
+        address: id
+        rewardTokens {
+          address: id
+          totalSupply
+          decimals
+          symbol
+          name
+        }
+      }
+      token0 {
+        address: id
+        symbol
+        totalSupply
+        name
+        decimals
+        derivedETH
+      }
+      token1 {
+        address: id
+        name
+        decimals
+        symbol
+        totalSupply
+        derivedETH
+      }
+      gaugeAddress
+      stable
+    }
+  }
+`;
+
+export const allUsersQuery = gql`
+  query ($skip: Int!, $blockNumber: Int!) {
+    users(first: 1000, skip: $skip, block: { number: $blockNumber }) {
+      id
+    }
+  }
+`;
+
+export const liqSnapshotsQuery = gql`
+  query ($skip: Int!, $blockNumber: Int!, $pair: String!) {
+    liquidityPositionSnapshots(
+      first: 1000
+      block: { number_gte: $blockNumber }
+      skip: $skip
+      where: { pair: $pair }
+    ) {
+      id
+      liquidityTokenBalance
+      gaugeBalance
+      user {
+        id
+      }
+    }
+  }
+`;
+
+export const tokenDayDatasQuery = gql`
+  query ($blockTimestamp: Int!, $token: String!) {
+    tokenDayDatas(first: 1, where: { date: $blockTimestamp, token: $token }) {
+      priceUSD
+    }
+  }
+`;
