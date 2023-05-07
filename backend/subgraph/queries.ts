@@ -115,9 +115,10 @@ export const liqSnapshotsQuery = gql`
   query ($skip: Int!, $blockNumber: Int!, $endblock: Int!, $pair: String!) {
     liquidityPositionSnapshots(
       first: 1000
-      block: { number_gte: $blockNumber }
       skip: $skip
-      where: { pair: $pair, block_lte: $endblock }
+      where: { pair: $pair, block_gte: $blockNumber, block_lte: $endblock }
+      orderBy: block
+      orderDirection: asc
     ) {
       id
       liquidityTokenBalance
