@@ -112,12 +112,12 @@ export const allUsersQuery = gql`
 `;
 
 export const liqSnapshotsQuery = gql`
-  query ($skip: Int!, $blockNumber: Int!, $pair: String!) {
+  query ($skip: Int!, $blockNumber: Int!, $endblock: Int!, $pair: String!) {
     liquidityPositionSnapshots(
       first: 1000
       block: { number_gte: $blockNumber }
       skip: $skip
-      where: { pair: $pair }
+      where: { pair: $pair, block_lte: $endblock }
     ) {
       id
       liquidityTokenBalance

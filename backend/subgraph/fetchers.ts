@@ -92,6 +92,7 @@ export const getTokenPriceUSD = async (
 export const getLiqSnapshotsForPair = async (
   network: any,
   blockNumber: number,
+  endblocknumber: number,
   pair: string
 ) => {
   let paginationRequired = true;
@@ -104,6 +105,7 @@ export const getLiqSnapshotsForPair = async (
       {
         skip: skip++ * 1000,
         blockNumber: Number(blockNumber),
+        endblock: Number(endblocknumber),
         pair,
       }
     );
