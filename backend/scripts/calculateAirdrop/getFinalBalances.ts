@@ -38,7 +38,7 @@ task(
           if (user !== "0x0000000000000000000000000000000000000000") {
             let usersEligibleBalance = BigNumber.from(balances[jindex]);
             let overflow = BigNumber.from(0);
-            let prevBalance = usersEligibleBalance;
+            let currentUserBalance = usersEligibleBalance;
             allLiqSnapshots.forEach((snapshot: LiqSnapshot) => {
               if (snapshot.user.id === user) {
                 const liqBalanceBN = ethers.utils.parseEther(
@@ -48,11 +48,9 @@ task(
                   snapshot.gaugeBalance
                 );
 
-                let delta = prevBalance
-                  .mul(-1)
-                  .add(liqBalanceBN)
-                  .add(gaugeBalanceBN);
-                prevBalance = liqBalanceBN.add(gaugeBalanceBN);
+                const balance = liqBalanceBN.add(gaugeBalanceBN);
+                let delta = currentUserBalance.mul(-1).add(balance);
+                currentUserBalance = balance;
                 overflow = overflow.add(delta);
                 if (overflow.lt(0)) {
                   usersEligibleBalance = usersEligibleBalance.add(overflow);

@@ -81,12 +81,10 @@ export const getTokenPriceUSD = async (
     token: token.address,
     blockTimestamp,
   });
+
   const splitString = (tokenDayDatas[0].priceUSD as string).split(".");
-  splitString[1] = splitString[1].slice(0, token.decimals);
-  return ethers.utils.parseUnits(
-    splitString[0] + "." + splitString[1],
-    Number(token.decimals)
-  );
+  splitString[1] = splitString[1] ? splitString[1].slice(0, 18) : "0";
+  return ethers.utils.parseUnits(splitString[0] + "." + splitString[1], 18);
 };
 
 export const getLiqSnapshotsForPair = async (

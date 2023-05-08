@@ -17,6 +17,14 @@ import { ROUTER_ADDRESS } from "../../constants/addresses";
 //77969151-blocknumber @April 7th 11:59pm UTC
 //87371188-blocknumber @May 5th 00:00UTC
 
+// Object.defineProperties(BigNumber.prototype, {
+//   toReadable: {
+//     value: function (this: BigNumber) {
+//       return ethers.utils.formatUnits(this, 18);
+//     },
+//   },
+// });
+
 export type UserData = {
   users: string[];
   balances: BigNumber[];
@@ -36,6 +44,7 @@ export type Token = {
   address: string;
   decimals: number;
   price?: BigNumber;
+  symbol: string;
 };
 
 export type Pair = {
@@ -74,7 +83,7 @@ async function getTokensWithPriceInfo(
       }
       if (!tokenData[pair.token1.address]) {
         tokenData[pair.token1.address] = {
-          ...pair.token0,
+          ...pair.token1,
           price: BigNumber.from(0),
         };
       }
@@ -91,6 +100,16 @@ async function getTokensWithPriceInfo(
   prices.forEach((price, index) => {
     const tokenInfo = tokenData[tokenKeys[index]];
     tokenData[tokenKeys[index]] = { ...tokenInfo, price };
+  });
+
+  console.log("Token data at : ", new Date(blocktimestamp * 1000));
+
+  Object.keys(tokenData).forEach((address) => {
+    console.log(
+      tokenData[address].symbol,
+      " : ",
+      ethers.utils.formatEther(tokenData[address].price as BigNumber)
+    );
   });
 
   return tokenData;
@@ -138,15 +157,24 @@ async function getAmountUSDPerUser(
       }
     );
 
-    const token0Price = tokenDatas[pair.token0.address].price as BigNumber;
-    const token1Price = tokenDatas[pair.token1.address].price as BigNumber;
+    const token0Price = (
+      tokenDatas[pair.token0.address].price as BigNumber
+    ).mul(ethers.utils.parseUnits("1", 18 - Number(pair.token0.decimals)));
+    const token1Price = (
+      tokenDatas[pair.token1.address].price as BigNumber
+    ).mul(ethers.utils.parseUnits("1", 18 - Number(pair.token1.decimals)));
 
     results.forEach((result, index) => {
       if (!userUSDAmounts[userKeys[index]])
         userUSDAmounts[userKeys[index]] = BigNumber.from("0");
       const usdcAmount = BigNumber.from(result[0].hex)
         .mul(token0Price)
-        .add(BigNumber.from(result[1].hex).mul(token1Price));
+        .div(ethers.utils.parseEther("1"))
+        .add(
+          BigNumber.from(result[1].hex)
+            .mul(token1Price)
+            .div(ethers.utils.parseEther("1"))
+        );
       userUSDAmounts[userKeys[index]] =
         userUSDAmounts[userKeys[index]].add(usdcAmount);
       totalAmount = totalAmount.add(usdcAmount);
@@ -196,13 +224,31 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
           .mul(ethers.utils.parseEther("1"))
           .div(totalAmount);
 
-        airdropPerUser[user] = ratio
+        const tokenAmount = ratio
           .mul(airdropamount)
           .div(ethers.utils.parseEther("1"));
-        airdropTotal = airdropTotal.add(airdropPerUser[user]);
+
+        //to filter out amounts lower than 18 decimals
+        if (tokenAmount.gt(0)) {
+          airdropPerUser[user] = tokenAmount;
+          airdropTotal = airdropTotal.add(airdropPerUser[user]);
+        }
       });
 
-      console.log(airdropTotal.toString());
+      console.log(
+        "Total users eligible : ",
+        Object.keys(airdropPerUser).length
+      );
+
+      console.log(
+        "Total LP USD amount at snapshot : ",
+        ethers.utils.formatEther(totalAmount)
+      );
+
+      console.log(
+        "Total token being distributed : ",
+        ethers.utils.formatEther(airdropTotal)
+      );
 
       const outFilePath = path.resolve(__dirname, "output/final.json");
       fs.writeFileSync(outFilePath, JSON.stringify(airdropPerUser));

@@ -42,7 +42,7 @@ export const multicallSplitOnOverflow = async (
     calls.push(
       multicall.call(
         contractCallContext,
-        options
+        options?.blockNumber
           ? {
               blockNumber: options.blockNumber,
             }
