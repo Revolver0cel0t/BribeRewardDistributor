@@ -294,15 +294,21 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
         ethers.utils.formatEther(airdropTotal)
       );
 
-      let bn = BigNumber.from("0");
+      let prettyPrintedFinal: any = {
+        "User Address": [],
+        "Arb airdrop amount": [],
+      };
       Object.keys(airdropPerUser).forEach((val) => {
-        bn = bn.add(airdropPerUser[val]);
+        prettyPrintedFinal["User Address"].push(val);
+        prettyPrintedFinal["Arb airdrop amount"].push(
+          ethers.utils.formatUnits(airdropPerUser[val], 18)
+        );
       });
-
-      console.log(bn.toString());
 
       const outFilePath = path.resolve(__dirname, "output/final.json");
       fs.writeFileSync(outFilePath, JSON.stringify(airdropPerUser));
+      const prettyFilePath = path.resolve(__dirname, "output/prettyFinal.json");
+      fs.writeFileSync(prettyFilePath, JSON.stringify(prettyPrintedFinal));
     }
   );
 // sudo npx hardhat get-airdrop-amounts --blocknumber 88395692 --network arbitrumOne --airdropamount 100000000000000000000000 0xde9161d8b76dd0b9890bee442c3585857a1a1edf 0x2f4a5da44639e9694319d518c8c40fbceb3f2430 0xa84861b2ccce56c42f0ee21e62b74e45d6f90c6d
