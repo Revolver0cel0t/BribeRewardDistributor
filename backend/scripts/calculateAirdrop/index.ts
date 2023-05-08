@@ -95,6 +95,7 @@ async function getDefiLLamaPricing(
       console.log(`${tokenData[tokenKey].symbol} - ${coinData.price}`);
       tokenData[tokenKey] = {
         ...tokenData[tokenKey],
+        // all usdc prices will have 18 decimals
         price: ethers.utils.parseEther(coinData.price.toString()),
       };
     } else {
@@ -201,24 +202,23 @@ async function getAmountUSDPerUser(
       }
     );
 
-    const token0Price = (
-      tokenDatas[pair.token0.address].price as BigNumber
-    ).mul(ethers.utils.parseUnits("1", 18 - Number(pair.token0.decimals)));
-    const token1Price = (
-      tokenDatas[pair.token1.address].price as BigNumber
-    ).mul(ethers.utils.parseUnits("1", 18 - Number(pair.token1.decimals)));
+    const token0Price = tokenDatas[pair.token0.address].price as BigNumber;
+    const token1Price = tokenDatas[pair.token1.address].price as BigNumber;
 
     results.forEach((result, index) => {
       if (!userUSDAmounts[userKeys[index]])
         userUSDAmounts[userKeys[index]] = BigNumber.from("0");
-      const usdcAmount = BigNumber.from(result[0].hex)
+      //normalize all tokens to 18 decimals, for purpose of converting it to its usdc value(and to be able to add all usdc amounts together)
+      const token0Amount = BigNumber.from(result[0].hex).mul(
+        ethers.utils.parseUnits("1", 18 - Number(pair.token0.decimals))
+      );
+      const token1Amount = BigNumber.from(result[1].hex).mul(
+        ethers.utils.parseUnits("1", 18 - Number(pair.token1.decimals))
+      );
+      const usdcAmount = token0Amount
         .mul(token0Price)
         .div(ethers.utils.parseEther("1"))
-        .add(
-          BigNumber.from(result[1].hex)
-            .mul(token1Price)
-            .div(ethers.utils.parseEther("1"))
-        );
+        .add(token1Amount.mul(token1Price).div(ethers.utils.parseEther("1")));
       userUSDAmounts[userKeys[index]] =
         userUSDAmounts[userKeys[index]].add(usdcAmount);
       totalAmount = totalAmount.add(usdcAmount);
@@ -246,13 +246,7 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
       let airdropPerUser: {
         [user: string]: BigNumber;
       } = {};
-      let tokenDatas = await getTokensWithPriceInfo(
-        swapPairs,
-        addressesArray
-        // network,
-        // Number(blocknumber),
-        // ethers.provider
-      );
+      let tokenDatas = await getTokensWithPriceInfo(swapPairs, addressesArray);
 
       tokenDatas = await getDefiLLamaPricing(
         tokenDatas,
@@ -300,7 +294,15 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
         ethers.utils.formatEther(airdropTotal)
       );
 
+      let bn = BigNumber.from("0");
+      Object.keys(airdropPerUser).forEach((val) => {
+        bn = bn.add(airdropPerUser[val]);
+      });
+
+      console.log(bn.toString());
+
       const outFilePath = path.resolve(__dirname, "output/final.json");
       fs.writeFileSync(outFilePath, JSON.stringify(airdropPerUser));
     }
   );
+// sudo npx hardhat get-airdrop-amounts --blocknumber 88395692 --network arbitrumOne --airdropamount 100000000000000000000000 0xde9161d8b76dd0b9890bee442c3585857a1a1edf 0x2f4a5da44639e9694319d518c8c40fbceb3f2430 0xa84861b2ccce56c42f0ee21e62b74e45d6f90c6d
