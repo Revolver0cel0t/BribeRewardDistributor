@@ -104,7 +104,7 @@ export const allPairDataQuerySwapWithGauge = gql`
 `;
 
 export const allUsersQuery = gql`
-  query ($skip: Int!, $blockNumber: Int!) {
+  query ($skip: Int!) {
     users(first: 1000, skip: $skip) {
       id
     }

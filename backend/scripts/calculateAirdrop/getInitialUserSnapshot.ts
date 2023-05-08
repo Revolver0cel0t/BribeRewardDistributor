@@ -66,14 +66,35 @@ task(
     const selectedPairs: Pair[] = swapPairs.filter((pair: Pair) =>
       addressesArray.includes(pair.address)
     );
-    const gaugeAddresses = selectedPairs.flatMap((pair) =>
-      pair?.gaugeAddress ? [pair.gaugeAddress] : []
+
+    console.log(
+      "Number of pools considered in the airdrop : ",
+      selectedPairs.length
     );
+    const blacklistedAddresses = selectedPairs
+      .flatMap((pair) => (pair?.gaugeAddress ? [pair.gaugeAddress] : []))
+      .concat("0x0000000000000000000000000000000000000000");
     //filter out the gauge contract from airdrop calculations
-    const users = (await getUsers(network.name, blocknumber)).flatMap(
-      ({ id }: { id: string }) => (gaugeAddresses.includes(id) ? [] : [id])
+    const users = (await getUsers(network.name)).flatMap(
+      ({ id }: { id: string }) =>
+        blacklistedAddresses.includes(id) ? [] : [id]
     );
+    console.log(
+      "Number of users that have interacted with the contracts : ",
+      users.length
+    );
+    let totalUsersIntial = 0;
     for (var index = 0; index < selectedPairs.length; index++) {
+      console.log("-------------------------");
+      console.log(
+        "Pool : ",
+        selectedPairs[index].stable
+          ? "sAMM-"
+          : "vAMM-" +
+              selectedPairs[index].token0.symbol +
+              "/" +
+              selectedPairs[index].token1.symbol
+      );
       const balances = await getBalanceData(
         users,
         selectedPairs[index],
@@ -91,11 +112,20 @@ task(
         }
       });
 
+      console.log("Users : ", filteredUsers.length);
+
       userBalancesForPool[selectedPairs[index].address] = {
         users: filteredUsers,
         balances: filteredBalances,
       };
+      totalUsersIntial += filteredUsers.length;
     }
+
+    console.log(
+      "Total users considered for initial snapshot : ",
+      totalUsersIntial
+    );
+
     const filePath = path.join(
       __dirname,
       "output",

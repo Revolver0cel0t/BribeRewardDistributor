@@ -39,14 +39,13 @@ export const getLocks = async (network: any, blockNumber?: number) => {
   return data;
 };
 
-export const getUsers = async (network: any, blockNumber?: number) => {
+export const getUsers = async (network: any) => {
   let paginationRequired = true;
   let data: any = [];
   let skip = 0;
   while (paginationRequired) {
     const { users } = await fetcher(network, allUsersQuery, {
       skip: skip++ * 1000,
-      blockNumber: Number(blockNumber),
     });
     if (users.length === 0) paginationRequired = false;
     data = [...data, ...users];

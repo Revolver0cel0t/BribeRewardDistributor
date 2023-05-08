@@ -24,6 +24,7 @@ task(
       const userData = JSON.parse(fs.readFileSync(filePath).toString());
 
       let allBalances: AirdropAmounts = {};
+      let usersObject: Record<string, boolean> = {};
 
       for (var index = 0; index < addressesArray.length; index++) {
         const { users, balances }: UserData = userData[addressesArray[index]];
@@ -35,35 +36,39 @@ task(
         );
         allBalances[addressesArray[index]] = {};
         users.forEach((user, jindex) => {
-          if (user !== "0x0000000000000000000000000000000000000000") {
-            let usersEligibleBalance = BigNumber.from(balances[jindex]);
-            let overflow = BigNumber.from(0);
-            let currentUserBalance = usersEligibleBalance;
-            allLiqSnapshots.forEach((snapshot: LiqSnapshot) => {
-              if (snapshot.user.id === user) {
-                const liqBalanceBN = ethers.utils.parseEther(
-                  snapshot.liquidityTokenBalance
-                );
-                const gaugeBalanceBN = ethers.utils.parseEther(
-                  snapshot.gaugeBalance
-                );
+          let usersEligibleBalance = BigNumber.from(balances[jindex]);
+          let overflow = BigNumber.from(0);
+          let currentUserBalance = usersEligibleBalance;
+          allLiqSnapshots.forEach((snapshot: LiqSnapshot) => {
+            if (snapshot.user.id === user) {
+              const liqBalanceBN = ethers.utils.parseEther(
+                snapshot.liquidityTokenBalance
+              );
+              const gaugeBalanceBN = ethers.utils.parseEther(
+                snapshot.gaugeBalance
+              );
 
-                const balance = liqBalanceBN.add(gaugeBalanceBN);
-                let delta = currentUserBalance.mul(-1).add(balance);
-                currentUserBalance = balance;
-                overflow = overflow.add(delta);
-                if (overflow.lt(0)) {
-                  usersEligibleBalance = usersEligibleBalance.add(overflow);
-                  overflow = BigNumber.from("0");
-                }
+              const balance = liqBalanceBN.add(gaugeBalanceBN);
+              let delta = currentUserBalance.mul(-1).add(balance);
+              currentUserBalance = balance;
+              overflow = overflow.add(delta);
+              if (overflow.lt(0)) {
+                usersEligibleBalance = usersEligibleBalance.add(overflow);
+                overflow = BigNumber.from("0");
               }
-            });
-            if (usersEligibleBalance.gt(0)) {
-              allBalances[addressesArray[index]][user] = usersEligibleBalance;
             }
+          });
+          if (usersEligibleBalance.gt(0)) {
+            usersObject[user] = true;
+            allBalances[addressesArray[index]][user] = usersEligibleBalance;
           }
         });
       }
+
+      console.log(
+        "Total users eligible for airdrop : ",
+        Object.keys(usersObject).length
+      );
 
       const outFilePath = path.resolve(
         __dirname,

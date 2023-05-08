@@ -1,21 +1,19 @@
 import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
-import {
-  allPairDataSwapWithGauge,
-  getTokenPriceUSD,
-} from "../../subgraph/fetchers";
+import { allPairDataSwapWithGauge } from "../../subgraph/fetchers";
 import ROUTER_ABI from "../../constants/abis/routerABI.json";
 import { multicallSplitOnOverflow } from "../../lib/multicall";
 import { BigNumber, ethers } from "ethers";
-import { Network } from "hardhat/types";
 import { ROUTER_ADDRESS } from "../../constants/addresses";
+import { getAddress } from "ethers/lib/utils";
+import axios from "axios";
 
 // "0xde9161d8b76dd0b9890bee442c3585857a1a1edf",arb/usdc
 // "0x2f4a5da44639e9694319d518c8c40fbceb3f2430",arb/xcal
 // "0xa84861b2ccce56c42f0ee21e62b74e45d6f90c6d",weth/arb
-//77969151-blocknumber @April 7th 11:59pm UTC
-//87371188-blocknumber @May 5th 00:00UTC
+// 77969151-blocknumber @April 7th 11:59pm UTC
+// 87371188-blocknumber @May 5th 00:00UTC
 
 // Object.defineProperties(BigNumber.prototype, {
 //   toReadable: {
@@ -53,6 +51,7 @@ export type Pair = {
   token0: Token;
   token1: Token;
   stable: boolean;
+  symbol: string;
 };
 
 export type AirdropAmounts = {
@@ -61,14 +60,59 @@ export type AirdropAmounts = {
   };
 };
 
-async function getTokensWithPriceInfo(
-  swapPairs: Pair[],
-  addressesArray: string[],
-  network: Network,
+const getDefiLLamaQuery = (addresses: string[]) => {
+  let query = "";
+  for (let index = 0; index < addresses.length; index++) {
+    if (index !== 0) {
+      query += ",";
+    }
+    query += `arbitrum:${getAddress(addresses[index])}`;
+  }
+  return query;
+};
+
+async function getDefiLLamaPricing(
+  tokenData: { [token: string]: Token },
   blocknumber: number,
   provider: ethers.providers.JsonRpcProvider
 ) {
+  const priceKeys = Object.keys(tokenData);
+
   const blocktimestamp = (await provider.getBlock(blocknumber)).timestamp;
+  const date = new Date(blocktimestamp * 1000);
+  const query = getDefiLLamaQuery(priceKeys);
+
+  const response = await axios.get(
+    `https://coins.llama.fi/prices/historical/${blocktimestamp}/${query}`
+  );
+  const result: any = await response.data;
+  const coins = result?.coins ?? {};
+  console.log(`Prices at : ${date}`);
+  for (let index = 0; index < priceKeys.length; index++) {
+    const tokenKey = priceKeys[index];
+    const coinData = coins[`arbitrum:${getAddress(tokenKey)}`];
+    if (coinData && coinData.confidence > 0.75) {
+      console.log(`${tokenData[tokenKey].symbol} - ${coinData.price}`);
+      tokenData[tokenKey] = {
+        ...tokenData[tokenKey],
+        price: ethers.utils.parseEther(coinData.price.toString()),
+      };
+    } else {
+      throw new Error("No coin price available");
+    }
+  }
+
+  return tokenData;
+}
+
+async function getTokensWithPriceInfo(
+  swapPairs: Pair[],
+  addressesArray: string[]
+  // network: Network,
+  // blocknumber: number,
+  // provider: ethers.providers.JsonRpcProvider
+) {
+  // const blocktimestamp = (await provider.getBlock(blocknumber)).timestamp;
   let tokenData: {
     [token: string]: Token;
   } = {};
@@ -90,27 +134,27 @@ async function getTokensWithPriceInfo(
     }
   });
 
-  const tokenKeys = Object.keys(tokenData);
-  const prices = await Promise.all(
-    tokenKeys.map(
-      async (token) =>
-        await getTokenPriceUSD(network.name, blocktimestamp, tokenData[token])
-    )
-  );
-  prices.forEach((price, index) => {
-    const tokenInfo = tokenData[tokenKeys[index]];
-    tokenData[tokenKeys[index]] = { ...tokenInfo, price };
-  });
+  // const tokenKeys = Object.keys(tokenData);
+  // const prices = await Promise.all(
+  //   tokenKeys.map(
+  //     async (token) =>
+  //       await getTokenPriceUSD(network.name, blocktimestamp, tokenData[token])
+  //   )
+  // );
+  // prices.forEach((price, index) => {
+  //   const tokenInfo = tokenData[tokenKeys[index]];
+  //   tokenData[tokenKeys[index]] = { ...tokenInfo, price };
+  // });
 
-  console.log("Token data at : ", new Date(blocktimestamp * 1000));
+  // console.log("Token data at : ", new Date(blocktimestamp * 1000));
 
-  Object.keys(tokenData).forEach((address) => {
-    console.log(
-      tokenData[address].symbol,
-      " : ",
-      ethers.utils.formatEther(tokenData[address].price as BigNumber)
-    );
-  });
+  // Object.keys(tokenData).forEach((address) => {
+  //   console.log(
+  //     tokenData[address].symbol,
+  //     " : ",
+  //     ethers.utils.formatEther(tokenData[address].price as BigNumber)
+  //   );
+  // });
 
   return tokenData;
 }
@@ -204,8 +248,14 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
       } = {};
       let tokenDatas = await getTokensWithPriceInfo(
         swapPairs,
-        addressesArray,
-        network,
+        addressesArray
+        // network,
+        // Number(blocknumber),
+        // ethers.provider
+      );
+
+      tokenDatas = await getDefiLLamaPricing(
+        tokenDatas,
         Number(blocknumber),
         ethers.provider
       );
