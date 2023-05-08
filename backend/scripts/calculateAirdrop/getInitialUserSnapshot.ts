@@ -32,14 +32,14 @@ async function getBalanceData(
   );
   let balance = results.map((result) => BigNumber.from(result[0].hex));
   if (pair.gaugeAddress) {
-    const calls = users.map((id: string) => ({
+    const gaugeCalls = users.map((id: string) => ({
       methodName: "balanceOf(address)",
       methodParameters: [id],
     }));
     const gaugeResults = await multicallSplitOnOverflow(
       pair.gaugeAddress,
       GAUGE_ABI,
-      calls,
+      gaugeCalls,
       "Gauge",
       provider,
       {
@@ -66,7 +66,9 @@ task(
     const selectedPairs: Pair[] = swapPairs.filter((pair: Pair) =>
       addressesArray.includes(pair.address)
     );
-    const gaugeAddresses = selectedPairs.map((pair) => pair.gaugeAddress);
+    const gaugeAddresses = selectedPairs.flatMap((pair) =>
+      pair?.gaugeAddress ? [pair.gaugeAddress] : []
+    );
     //filter out the gauge contract from airdrop calculations
     const users = (await getUsers(network.name, blocknumber)).flatMap(
       ({ id }: { id: string }) => (gaugeAddresses.includes(id) ? [] : [id])
@@ -80,11 +82,12 @@ task(
       );
 
       const filteredUsers: string[] = [];
+      const filteredBalances: BigNumber[] = [];
 
-      const filteredBalances = balances.filter((balance, index) => {
+      balances.forEach((balance, index) => {
         if (balance.gt(0)) {
           filteredUsers.push(users[index]);
-          return true;
+          filteredBalances.push(balance);
         }
       });
 

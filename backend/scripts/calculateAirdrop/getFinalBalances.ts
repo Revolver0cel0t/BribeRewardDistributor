@@ -36,8 +36,9 @@ task(
         allBalances[addressesArray[index]] = {};
         users.forEach((user, jindex) => {
           if (user !== "0x0000000000000000000000000000000000000000") {
-            let userFinalBalance = BigNumber.from(balances[jindex]);
+            let usersEligibleBalance = BigNumber.from(balances[jindex]);
             let overflow = BigNumber.from(0);
+            let prevBalance = usersEligibleBalance;
             allLiqSnapshots.forEach((snapshot: LiqSnapshot) => {
               if (snapshot.user.id === user) {
                 const liqBalanceBN = ethers.utils.parseEther(
@@ -46,19 +47,21 @@ task(
                 const gaugeBalanceBN = ethers.utils.parseEther(
                   snapshot.gaugeBalance
                 );
-                let delta = userFinalBalance
+
+                let delta = prevBalance
                   .mul(-1)
                   .add(liqBalanceBN)
                   .add(gaugeBalanceBN);
+                prevBalance = liqBalanceBN.add(gaugeBalanceBN);
                 overflow = overflow.add(delta);
                 if (overflow.lt(0)) {
-                  userFinalBalance = userFinalBalance.add(overflow);
+                  usersEligibleBalance = usersEligibleBalance.add(overflow);
                   overflow = BigNumber.from("0");
                 }
               }
             });
-            if (userFinalBalance.gt(0)) {
-              allBalances[addressesArray[index]][user] = userFinalBalance;
+            if (usersEligibleBalance.gt(0)) {
+              allBalances[addressesArray[index]][user] = usersEligibleBalance;
             }
           }
         });
