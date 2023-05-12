@@ -8,14 +8,14 @@ import fs from "fs";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { BigNumber } from "ethers";
 
-const jsonToFirestore = async () => {
+const jsonToFirestore = async (fileName: string) => {
   try {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount as any),
     });
     console.log("Firebase Initialized");
 
-    await restore(path.resolve(__dirname, "./output/proofs.json"));
+    await restore(path.resolve(__dirname, "output/" + fileName));
     console.log("Upload Success");
   } catch (error) {
     console.log(error);
@@ -31,10 +31,16 @@ const writeToFile = (array: any, filename: string) => {
 
 task("generate-merkle-tree", "")
   .addParam("blocktimestamp", "Timestamp for bribes")
-  .setAction(async ({ blocktimestamp }) => {
+  .addOptionalParam(
+    "airdropname",
+    "To consider the input from airdrop or merkle"
+  )
+  .setAction(async ({ blocktimestamp, airdropname }) => {
     const rewardFilepath = path.resolve(
       __dirname,
-      "../getBribeRewardsAllUsers/output/rewards.json"
+      airdropname
+        ? "../calculateAirdrop/output/formattedFinal.json"
+        : "../getBribeRewardsAllUsers/output/rewards.json"
     );
     const rewardData = JSON.parse(fs.readFileSync(rewardFilepath).toString());
 
@@ -71,12 +77,17 @@ task("generate-merkle-tree", "")
 
     proofs["root"] = { proof: root };
 
+    const fileName = airdropname ? "airdropProofs.json" : "proofs.json";
+
     writeToFile(
-      { [`BRIBE-REWARDS-EPOCH-${blocktimestamp}`]: proofs },
-      "proofs.json"
+      {
+        [airdropname ? airdropname : `BRIBE-REWARDS-EPOCH-${blocktimestamp}`]:
+          proofs,
+      },
+      fileName
     );
 
-    await jsonToFirestore();
+    await jsonToFirestore(fileName);
 
     console.log("Done");
   });

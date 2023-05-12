@@ -311,4 +311,79 @@ task("get-airdrop-amounts", "Used to calculate the final distribution")
       fs.writeFileSync(prettyFilePath, JSON.stringify(prettyPrintedFinal));
     }
   );
-// sudo npx hardhat get-airdrop-amounts --blocknumber 88395692 --network arbitrumOne --airdropamount 100000000000000000000000 0xde9161d8b76dd0b9890bee442c3585857a1a1edf 0x2f4a5da44639e9694319d518c8c40fbceb3f2430 0xa84861b2ccce56c42f0ee21e62b74e45d6f90c6d
+
+task("get-divided-amount", "Used to calculate the final distribution")
+  .addParam("multiplier", "multiplier")
+  .setAction(async ({ multiplier }, { network, ethers }) => {
+    const filePath = path.resolve(__dirname, "output/final.json");
+    let final = JSON.parse(fs.readFileSync(filePath).toString());
+
+    const multiplierBn = ethers.utils.parseEther(multiplier);
+
+    let total = BigNumber.from("0");
+    Object.keys(final).forEach((user) => {
+      const amt = multiplierBn
+        .mul(final[user])
+        .div(ethers.utils.parseEther("1"));
+      total = total.add(amt);
+      final[user] = amt.toString();
+    });
+
+    console.log(ethers.utils.formatEther(total));
+
+    const dividedFinal = path.resolve(__dirname, "output/dividedFinal.json");
+    fs.writeFileSync(dividedFinal, JSON.stringify(final));
+  });
+
+task("get-formatted-amount", "Used to input into the merkle proof script")
+  .addParam("token", "Token to distribute")
+  .setAction(async ({ token }, { network, ethers }) => {
+    const filePath = path.resolve(__dirname, "output/dividedFinal.json");
+    const final = JSON.parse(fs.readFileSync(filePath).toString());
+
+    const checksummedToken = getAddress(token);
+
+    let formattedFinal: any = {};
+
+    Object.keys(final).forEach((user) => {
+      formattedFinal[getAddress(user)] = {
+        [checksummedToken]: final[user],
+      };
+    });
+
+    const dividedFinal = path.resolve(__dirname, "output/formattedFinal.json");
+    fs.writeFileSync(dividedFinal, JSON.stringify(formattedFinal));
+  });
+
+task("verify-airdrop", "Verification").setAction(
+  async ({ token }, { network, ethers }) => {
+    const filePath = path.resolve(
+      __dirname,
+      "../generateMerkleTree/output/airdropProofs.json"
+    );
+    const file = JSON.parse(fs.readFileSync(filePath).toString());
+    const filePath1 = path.resolve(__dirname, "./output/final.json");
+    const file1 = JSON.parse(fs.readFileSync(filePath1).toString());
+
+    let total = BigNumber.from("0");
+    Object.keys(file["ARB-AIRDROP-1"]).forEach((user) => {
+      if (user !== "root") {
+        const bamt = BigNumber.from(
+          file["ARB-AIRDROP-1"][user].rewardInfo.amounts[0]
+        );
+        total = total.add(bamt);
+        if (
+          !bamt.eq(
+            ethers.utils
+              .parseEther("0.25")
+              .mul(file1[user.toLowerCase()])
+              .div(ethers.utils.parseEther("1"))
+          )
+        ) {
+          throw new Error("weee");
+        }
+      }
+    });
+    console.log(ethers.utils.formatEther(total));
+  }
+);

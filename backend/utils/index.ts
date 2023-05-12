@@ -20,5 +20,6 @@ export const getCurrentEpochTimestamp = (): number => 1679529600;
 // 13th-20th - end block.timestamp : 1681948800, blocknumber:82253133
 // 20th-27th - end block.timestamp : 1682553600,blocknumber:84651215
 //27th-4th - end block.timestamp : 1683158400,blocknumber:87029800
+// 4th-11th - end block.timestamp : 1683763200,blocknumber:89417006
 
 //https://arb-goerli.g.alchemy.com/v2/0f8Dq7WAG_nfSlPUeoNCD7ZRN8XN5Kma
