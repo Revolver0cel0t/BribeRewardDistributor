@@ -1,7 +1,6 @@
 import { task } from "hardhat/config";
 import fs from "fs";
 import path from "path";
-//@ts-ignore
 import { BigNumber } from "ethers";
 import VOTER_ABI from "../../constants/abis/voterABI.json";
 import { allSwapPairs, getLocks } from "../../subgraph/fetchers";
@@ -85,24 +84,15 @@ task("calculate-bribe-rewards", "")
 
     console.log("Total amounts to distro : ", distroAmts);
     console.log("Total pairs to calc for : ", tokenKeys.length);
-    // console.log("Fecthing unexpired locks");
-    // const unexpiredLocks = await getAllUnexpiredLocks(
-    //   lockData,
-    //   chainId,
-    //   provider
-    // );
-
-    // console.log("Fecthing lock information");
-    // const locks = await getFullDataForTokens(unexpiredLocks, chainId, provider);
 
     console.log({ locks: locks.length, pairs: pairs.length });
 
-    let c = 0;
+    let totalPairs = 0;
     for (let i = 0; i < pairs.length; i++) {
       const pair = pairs[i];
       const rewardData = bribeInputs[getAddress(pair.bribe.address)];
       if (!rewardData) continue;
-      c++;
+      totalPairs++;
       console.log("Fecthing gauge weight");
       const tokenKeys = Object.keys(rewardData);
 
@@ -161,7 +151,7 @@ task("calculate-bribe-rewards", "")
       );
     }
 
-    console.log("Total pairs calculated for : ", c);
+    console.log("Total pairs calculated for : ", totalPairs);
 
     console.log(
       "Total Rewards being distributed : ",
