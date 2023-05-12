@@ -92,6 +92,15 @@ function weeklyEmission(
   return emission.gt(circulatingEmissions) ? emission : circulatingEmissions;
 }
 
+function calculateGrowth(
+  substracted: BigNumber,
+  lockedSupply: BigNumber,
+  minted: BigNumber,
+  totalSupply: BigNumber
+) {
+  return lockedSupply.mul(minted).div(totalSupply.sub(substracted));
+}
+
 //NOTE: you have to be on a local forked version of arbitrum to run this
 task(
   "calculate-emissions",
@@ -99,9 +108,9 @@ task(
 )
   .addParam("decay", "Emissions decay")
   .addParam("boost", "Emissions boost")
-  .addParam(
+  .addOptionalParam(
     "rebasepercentage",
-    "The percentage of the rebase that has been claimed"
+    "The percentage of the rebase that has been claimed" //This only gets used when theres no lockIncrease percentage mentioned for that epoch(lockIncreases.json)
   )
   .setAction(async ({ decay, boost, rebasepercentage }, { ethers }) => {
     const lockIncreaseFilePath = path.join(
@@ -131,14 +140,16 @@ task(
       ethers.provider
     );
 
-    let filename = `${decay}_${boost}_${rebasepercentage}_${new Date()}`;
+    let filename = `${decay}_${boost}_${rebasepercentage ?? 0}_${new Date()}`;
     let filePath = path.join(__dirname, "output", `${filename}.csv`);
 
     decay = BigNumber.from("100").sub(decay).mul("100");
     boost = ethers.utils.parseEther(boost);
 
+    //get initial weekly emissions
     let weekly: BigNumber = await minter.weekly();
 
+    //total supply before boost
     let totalSupply: BigNumber = await token.totalSupply();
     let initialSupply = totalSupply;
     const substractedAddresses: string[] =
@@ -150,8 +161,9 @@ task(
       );
     }
 
-    console.log("Substracted", ethers.utils.formatEther(subtracted));
+    console.log("Initial Substracted", ethers.utils.formatEther(subtracted));
 
+    //locked supply before boost
     let lockedSupply: BigNumber = await votingEscrow.totalSupply();
 
     console.log(
@@ -175,23 +187,24 @@ task(
         subtracted,
         boost
       );
-
-      const rebaseEmissions: BigNumber = await minter.calculate_growth(weekly);
-      // const gaugeEmissions = weekly.sub(rebaseEmissions);
-
       console.log("Emissions : ", ethers.utils.formatEther(weekly));
 
+      const rebaseEmissions: BigNumber = calculateGrowth(
+        subtracted,
+        lockedSupply,
+        weekly,
+        totalSupply
+      );
+
       totalSupply = totalSupply.add(weekly);
+
       const percentage = lockIncreases[index];
       if (percentage)
         console.log("Extra increase in locks by  : ", percentage, "%");
 
       lockedSupply = percentage
-        ? lockedSupply
-            .mul(ethers.utils.parseUnits(percentage, 4))
-            .div(ethers.utils.parseUnits("100", 4))
-            .add(lockedSupply)
-        : lockedSupply.add(rebaseEmissions.mul(rebasepercentage).div(100));
+        ? lockedSupply.mul(percentage).div(100).add(lockedSupply)
+        : lockedSupply.add(rebaseEmissions.mul(rebasepercentage ?? 0).div(100));
 
       if (lockedSupply.gt(totalSupply))
         throw new Error("Locked supply cannot exceed total supply");
