@@ -22,6 +22,7 @@ import "./scripts/deploy";
 import "./scripts/calculateAirdrop";
 import "./scripts/calculateAirdrop/getFinalBalances";
 import "./scripts/calculateAirdrop/getInitialUserSnapshot";
+import "./scripts/emissionsCalculator";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(

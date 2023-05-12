@@ -9,20 +9,6 @@ import { ROUTER_ADDRESS } from "../../constants/addresses";
 import { getAddress } from "ethers/lib/utils";
 import axios from "axios";
 
-// "0xde9161d8b76dd0b9890bee442c3585857a1a1edf",arb/usdc
-// "0x2f4a5da44639e9694319d518c8c40fbceb3f2430",arb/xcal
-// "0xa84861b2ccce56c42f0ee21e62b74e45d6f90c6d",weth/arb
-// 77969151-blocknumber @April 7th 11:59pm UTC
-// 87371188-blocknumber @May 5th 00:00UTC
-
-// Object.defineProperties(BigNumber.prototype, {
-//   toReadable: {
-//     value: function (this: BigNumber) {
-//       return ethers.utils.formatUnits(this, 18);
-//     },
-//   },
-// });
-
 export type UserData = {
   users: string[];
   balances: BigNumber[];
