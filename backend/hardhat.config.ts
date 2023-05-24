@@ -23,6 +23,8 @@ import "./scripts/calculateAirdrop";
 import "./scripts/calculateAirdrop/getFinalBalances";
 import "./scripts/calculateAirdrop/getInitialUserSnapshot";
 import "./scripts/emissionsCalculator";
+import "./scripts/emissionsCalculator/hardhatSim";
+import "./scripts/utils/generateBribesJson";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
@@ -43,7 +45,6 @@ module.exports = {
       forking: {
         url:
           "https://arb-mainnet.alchemyapi.io/v2/" + process.env.ALCHEMY_API_KEY,
-        blockNumber: 14878741,
       },
     },
     local: {

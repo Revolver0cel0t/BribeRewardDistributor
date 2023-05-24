@@ -76,9 +76,8 @@ task("calculate-bribe-rewards", "")
         if (!distroAmts[val]) {
           distroAmts[val] = "0";
         }
-        distroAmts[val] = BigNumber.from(distroAmts[val])
-          .add(bribeInputs[key][val].amount)
-          .toString();
+        distroAmts[val] =
+          distroAmts[val] + Number(bribeInputs[key][val].amount);
       });
     });
 
@@ -86,7 +85,6 @@ task("calculate-bribe-rewards", "")
     console.log("Total pairs to calc for : ", tokenKeys.length);
 
     console.log({ locks: locks.length, pairs: pairs.length });
-
     let totalPairs = 0;
     for (let i = 0; i < pairs.length; i++) {
       const pair = pairs[i];
@@ -129,13 +127,14 @@ task("calculate-bribe-rewards", "")
               if (!allTokenRewards[owner][tokenKey]) {
                 allTokenRewards[owner][tokenKey] = ZERO;
               }
-              const tokenMultiplier = BigNumber.from(10).pow(
-                rewardData[tokenKey].decimals
-              );
-              const rewardAmountForToken = BigNumber.from(
-                rewardData[tokenKey].amount
-              )
-                .mul(tokenMultiplier)
+              // const tokenMultiplier = BigNumber.from(10).pow(
+              //   rewardData[tokenKey].decimals
+              // );
+              const rewardAmountForToken = ethers.utils
+                .parseUnits(
+                  rewardData[tokenKey].amount,
+                  rewardData[tokenKey].decimals
+                )
                 .mul(rewardMultiplierForToken)
                 .div(WEI);
               allTokenRewards[owner][tokenKey] =

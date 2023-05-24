@@ -57,7 +57,7 @@ const getDefiLLamaQuery = (addresses: string[]) => {
   return query;
 };
 
-async function getDefiLLamaPricing(
+export async function getDefiLLamaPricing(
   tokenData: { [token: string]: Token },
   blocknumber: number,
   provider: ethers.providers.JsonRpcProvider
