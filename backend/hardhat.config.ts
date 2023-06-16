@@ -57,8 +57,7 @@ module.exports = {
       blockNumber: 65804153,
     },
     arbitrumOne: {
-      url:
-        "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_API_KEY,
+      url: "https://arb1.croswap.com/rpc",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     goerli: {

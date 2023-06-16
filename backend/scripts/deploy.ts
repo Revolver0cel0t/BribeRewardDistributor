@@ -13,7 +13,7 @@ task("deploy-merkle-claim", "Deploy MerkleClaim contract").setAction(
     const config = JSON.parse(fs.readFileSync(configFilePath).toString());
 
     const merkleRoot =
-      "0xf4a7a24937d8ee862aa5397854d171a0b30255b96aaecd9ef7475dd4b0e37b4b"; //place merkle root here
+      "0x25f51378261f7aa4b2a70a485c01301adf5202d3a817a2a3a8f4a8f62e0b10f8"; //place merkle root here
 
     const MerkleClaim = await ethers.getContractFactory(
       "MerkleClaimMultipleERC20"
