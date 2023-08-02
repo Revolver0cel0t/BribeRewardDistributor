@@ -50,8 +50,9 @@ task("generate-bribe-json").setAction(async (_, { network, ethers }) => {
     for (let tokenIndex = 0; tokenIndex < priceInfo.length - 1; tokenIndex++) {
       const token = tokens[tokenIndex];
       const amt =
-        Number(priceInfo[tokenIndex]) /
-        Number(ethers.utils.formatEther(token.price));
+        (Number(priceInfo[tokenIndex]) /
+          Number(ethers.utils.formatEther(token.price))) *
+        0.3;
       totals[tokenIndex] = (totals[tokenIndex] ?? 0) + amt;
       output[key][token.address] = {
         decimals: token.decimals,
