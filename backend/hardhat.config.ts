@@ -25,6 +25,7 @@ import "./scripts/calculateAirdrop/getInitialUserSnapshot";
 import "./scripts/emissionsCalculator";
 import "./scripts/emissionsCalculator/hardhatSim";
 import "./scripts/utils/generateBribesJson";
+import "./scripts/snapshot";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
