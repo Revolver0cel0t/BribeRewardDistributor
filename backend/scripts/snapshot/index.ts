@@ -61,6 +61,7 @@ task("get-ve-snapshot", "")
 
 
     const lockSnapshot:Record<string,any> = {}
+    const lockSnapshotPretty:Record<string,any> = {}
     allLockAmounts.forEach((value,index)=>{
         if(!lockSnapshot[locks[index].owner]){
             lockSnapshot[locks[index].owner] = {}
@@ -71,14 +72,30 @@ task("get-ve-snapshot", "")
             lockAmount:totalLockAmount,
             lockPercentage
         }
+        const lockPercentagePretty = Number(ethers.utils.formatEther(totalLockAmount))/ Number(ethers.utils.formatEther(totalVotingPower))
+        lockSnapshotPretty[locks[index].owner] = {
+            lockAmount:ethers.utils.formatEther(totalLockAmount),
+            lockPercentage:lockPercentagePretty * 100
+        }
     })
+
+    const percentage = Object.keys(lockSnapshotPretty).reduce((prev,curr)=>prev+lockSnapshotPretty[curr].lockPercentage,0)
   
+
+
+    console.log('Total percentage : ',percentage)
     const totalFilePath = path.join(
       __dirname,
       "output",
       "snapshot.json"
     );
     fs.writeFileSync(totalFilePath, JSON.stringify(lockSnapshot));
+    const totalFilePathPretty = path.join(
+      __dirname,
+      "output",
+      "snapshotPretty.json"
+    );
+    fs.writeFileSync(totalFilePathPretty, JSON.stringify(lockSnapshotPretty));
 
     console.log("Done");
   });
