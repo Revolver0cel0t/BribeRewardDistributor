@@ -6,6 +6,7 @@ import { VE_ADDRESS } from "../../constants";
 import VE_ABI from "../../constants/abis/veABI.json";
 import { multicallSplitOnOverflow } from "../../lib/multicall";
 import { getLocks } from "../../subgraph/fetchers";
+import { convertLength } from "@mui/material/styles/cssUtils";
 
 Object.defineProperties(BigNumber.prototype, {
   toJSON: {
@@ -42,7 +43,7 @@ async function getMultipleLocksAmts(
   return convertedResults;
 }
 
-task("get-ve-balances", "")
+task("get-ve-balances", "Locked stats at blocknumber")
   .addParam("blocknumber", "Block Number")
   .setAction(async ({ blocknumber }, { network, ethers }) => {
     const chainId = 42161;
