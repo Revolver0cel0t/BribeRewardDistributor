@@ -1,13 +1,13 @@
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-web3";
 import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-waffle";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-web3";
 
 const { subtask } = require("hardhat/config");
 const {
@@ -15,17 +15,20 @@ const {
 } = require("hardhat/builtin-tasks/task-names");
 
 // register tasks
-import "./scripts/getBribeRewardsAllUsers";
-import "./scripts/generateMerkleTree";
-import "./scripts/epochFlip";
-import "./scripts/deploy";
 import "./scripts/calculateAirdrop";
 import "./scripts/calculateAirdrop/getFinalBalances";
 import "./scripts/calculateAirdrop/getInitialUserSnapshot";
+import "./scripts/calculateLpBalances";
+import "./scripts/calculateSpotBalances";
+import "./scripts/calculateVeBalances";
+import "./scripts/deploy";
 import "./scripts/emissionsCalculator";
 import "./scripts/emissionsCalculator/hardhatSim";
-import "./scripts/utils/generateBribesJson";
+import "./scripts/epochFlip";
+import "./scripts/generateMerkleTree";
+import "./scripts/getBribeRewardsAllUsers";
 import "./scripts/snapshot";
+import "./scripts/utils/generateBribesJson";
 
 // ignore test files
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
